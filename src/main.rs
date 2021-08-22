@@ -1,4 +1,3 @@
-use futures::future;
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
@@ -20,15 +19,15 @@ struct Claims {
 fn main() {
     let mut io = MetaIoHandler::default();
 
-    io.add_method("ping", |_params: Params| {
-        future::ok(Value::String("pong".to_owned()))
+    io.add_method("ping", |_params: Params| async {
+        Ok(Value::String("pong".to_owned()))
     });
 
-    io.add_method_with_meta("test", |_params: Params, auth: Auth| {
+    io.add_method_with_meta("test", |_params: Params, auth: Auth| async {
         let jwt = match auth.jwt {
             Some(s) => s,
             None => {
-                return future::err(Error::invalid_request());
+                return Err(Error::invalid_request());
             }
         };
         let token_data = match decode::<Claims>(
@@ -38,14 +37,14 @@ fn main() {
         ) {
             Ok(c) => c,
             Err(e) => {
-                return future::err(Error {
+                return Err(Error {
                     code: ErrorCode::ServerError(3),
                     message: "invalid jwt".to_owned(),
                     data: Some(Value::String(e.to_string())),
                 });
             }
         };
-        future::ok(to_value(token_data.claims).unwrap())
+        Ok(to_value(token_data.claims).unwrap())
     });
 
     let server = ServerBuilder::new(io)
