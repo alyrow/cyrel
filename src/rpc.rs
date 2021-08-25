@@ -3,11 +3,12 @@ use std::sync::{Arc, Mutex};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use jsonrpc_derive::rpc;
-use pbkdf2::Pbkdf2;
+use log::{error, info, warn};
 use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
+use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 
-use crate::authentication::{Meta, Claims};
+use crate::authentication::{Claims, Meta};
 use crate::{models::User, schema::users};
 
 pub use self::rpc_impl_Rpc::gen_server;
@@ -29,27 +30,71 @@ pub struct RpcImpl<'a> {
     pub rng: StdRng,
 }
 
+macro_rules! server_error {
+    ($e:expr) => {
+        match $e {
+            Ok(a) => a,
+            Err(err) => {
+                error!("{}", err);
+                return Err(jsonrpc_core::Error {
+                    // TODO: define error codes
+                    code: jsonrpc_core::ErrorCode::ServerError(-32000),
+                    message: format!("{}", err),
+                    data: None,
+                });
+            }
+        }
+    };
+}
+
 impl Rpc for RpcImpl<'static> {
     type Metadata = Meta;
 
     fn ping(&self) -> jsonrpc_core::Result<String> {
+        info!("pinged");
         Ok("pong".to_owned())
     }
 
     fn login(&self, username: String, password: String) -> jsonrpc_core::Result<String> {
         let user: User = {
-            let db = self.db.lock().unwrap();
-            users::dsl::users
-                .filter(users::dsl::username.eq(username))
+            let db = server_error! {
+                self.db.lock()
+            };
+
+            match users::dsl::users
+                .filter(users::dsl::username.eq(&username))
                 .first(&*db)
-                .unwrap()
+            {
+                Ok(user) => user,
+                Err(_) => {
+                    warn!("{} isn't a know username", username);
+                    return Err(jsonrpc_core::Error {
+                        // TODO: define error codes
+                        code: jsonrpc_core::ErrorCode::ServerError(1),
+                        message: "unknown username".to_owned(),
+                        data: None,
+                    });
+                }
+            }
         };
-        let hash = PasswordHash::new(&user.password).unwrap();
+
+        let hash = server_error! {
+            PasswordHash::new(&user.password)
+        };
         if Pbkdf2.verify_password(password.as_bytes(), &hash).is_ok() {
-            let jwt = Claims::from_user(&user).to_jwt(self.jwt_secret).unwrap();
+            let jwt = server_error! {
+                Claims::from_user(&user).to_jwt(self.jwt_secret)
+            };
+            info!("{} logged in", username);
             Ok(jwt)
         } else {
-            todo!()
+            warn!("{} failed to log in", username);
+            Err(jsonrpc_core::Error {
+                // TODO: define error codes
+                code: jsonrpc_core::ErrorCode::ServerError(2),
+                message: "invalid password".to_owned(),
+                data: None,
+            })
         }
     }
 }

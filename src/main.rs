@@ -12,19 +12,24 @@ use std::sync::{Arc, Mutex};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
+use env_logger;
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
+use log::{debug, info, trace};
 use rand::prelude::*;
 
 use crate::authentication::Meta;
-use crate::rpc::{RpcImpl, gen_server::Rpc};
+use crate::rpc::{gen_server::Rpc, RpcImpl};
 
 fn main() {
     dotenv().ok();
+    env_logger::init();
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    debug!("DATABASE_URL={}", db_url);
     let db_conn =
         SqliteConnection::establish(&db_url).expect(&format!("Error connecting to {}", db_url));
+    info!("connected to the database");
 
     // FIXME: make it random (more difficult for debugging)
     let jwt_secret = Box::leak(
@@ -32,6 +37,7 @@ fn main() {
             .expect("JWT_SECRET must be set")
             .into_boxed_str(),
     );
+    debug!("JWT_SECRET={}", jwt_secret);
 
     let mut io = MetaIoHandler::default();
     let rpc = RpcImpl {
@@ -53,10 +59,17 @@ fn main() {
                 .map(|s| s.strip_prefix("Bearer ")) // FIXME: reliable?
                 .flatten()
                 .map(|s| s.to_owned());
+            trace!("got JWT: {:?}", jwt);
             Meta { jwt }
+        })
+        .request_middleware(|req: hyper::Request<hyper::Body>| {
+            trace!("{:?}", req);
+            req.into()
         })
         .start_http(&"127.0.0.1:3030".parse().unwrap())
         .unwrap();
+
+    info!("rpc started");
 
     server.wait();
 }
