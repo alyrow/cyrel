@@ -30,6 +30,8 @@
           rustfmt-preview
           latest.rust-src
         ])) ++ (with pkgs; [
+          pkg-config
+          openssl
           rust-nightly.rust-analyzer
           cargo-expand
           sqlite

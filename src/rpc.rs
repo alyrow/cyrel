@@ -9,6 +9,7 @@ use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 
 use crate::authentication::{Claims, Meta};
+use crate::SETTINGS;
 use crate::{models::User, schema::users};
 
 pub use self::rpc_impl_Rpc::gen_server;
@@ -26,7 +27,6 @@ pub trait Rpc {
 
 pub struct RpcImpl {
     pub db: Arc<Mutex<SqliteConnection>>,
-    pub jwt_secret: &'static str,
     pub rng: StdRng,
 }
 
@@ -83,7 +83,7 @@ impl Rpc for RpcImpl {
         };
         if Pbkdf2.verify_password(password.as_bytes(), &hash).is_ok() {
             let jwt = server_error! {
-                Claims::from_user(&user).to_jwt(self.jwt_secret)
+                Claims::from_user(&user).to_jwt(&SETTINGS.jwt.secret)
             };
             info!("{} logged in", username);
             Ok(jwt)

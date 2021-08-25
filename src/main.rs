@@ -2,51 +2,62 @@
 extern crate diesel;
 
 mod authentication;
+mod calendar;
 mod models;
 mod rpc;
 mod schema;
+mod settings;
 
-use std::env;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
 
+use clap::{clap_app, ArgMatches};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
-
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
+use lazy_static::lazy_static;
 use log::{debug, info, trace};
 use rand::prelude::*;
 
 use crate::authentication::Meta;
 use crate::rpc::{gen_server::Rpc, RpcImpl};
+use crate::settings::Settings;
+
+lazy_static! {
+    static ref CLI: ArgMatches<'static> = clap_app!(
+        cyrel =>
+            (version: "0.1")
+            (@arg CONFIG: -c --config +takes_value "config file to read")
+            (@arg PORT: -p --port +takes_value "port to use")
+    )
+    .get_matches();
+    static ref SETTINGS: Settings = Settings::new(&CLI).expect("failed to read settings");
+}
 
 fn main() {
     dotenv().ok();
     env_logger::init();
 
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    debug!("DATABASE_URL={}", db_url);
-    let db_conn =
-        SqliteConnection::establish(&db_url).unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
-    info!("connected to the database");
+    lazy_static::initialize(&CLI);
+    lazy_static::initialize(&SETTINGS);
 
-    // FIXME: make it random (more difficult for debugging)
-    let jwt_secret = Box::leak(
-        env::var("JWT_SECRET")
-            .expect("JWT_SECRET must be set")
-            .into_boxed_str(),
-    );
-    debug!("JWT_SECRET={}", jwt_secret);
+    debug!("{:#?}", *SETTINGS);
+
+    let db_conn = SqliteConnection::establish(&SETTINGS.database.url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", SETTINGS.database.url));
+    info!("connected to the database");
 
     let mut io = MetaIoHandler::default();
     let rpc = RpcImpl {
         db: Arc::new(Mutex::new(db_conn)),
-        jwt_secret,
         rng: StdRng::from_entropy(),
     };
 
     io.extend_with(rpc.to_delegate());
+
+    let addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), SETTINGS.port);
 
     let server = ServerBuilder::new(io)
         .cors_allow_headers(cors::AccessControlAllowHeaders::Any)
@@ -66,10 +77,10 @@ fn main() {
             trace!("{:?}", req);
             req.into()
         })
-        .start_http(&"127.0.0.1:3030".parse().unwrap())
+        .start_http(&addr)
         .unwrap();
 
-    info!("rpc started");
+    info!("rpc started at {}", addr);
 
     server.wait();
 }
