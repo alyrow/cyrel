@@ -24,9 +24,9 @@ pub trait Rpc {
     fn login(&self, username: String, password: String) -> jsonrpc_core::Result<String>;
 }
 
-pub struct RpcImpl<'a> {
+pub struct RpcImpl {
     pub db: Arc<Mutex<SqliteConnection>>,
-    pub jwt_secret: &'a str,
+    pub jwt_secret: &'static str,
     pub rng: StdRng,
 }
 
@@ -47,7 +47,7 @@ macro_rules! server_error {
     };
 }
 
-impl Rpc for RpcImpl<'static> {
+impl Rpc for RpcImpl {
     type Metadata = Meta;
 
     fn ping(&self) -> jsonrpc_core::Result<String> {
