@@ -36,7 +36,7 @@ impl Claims {
         .map(|j| Some(j.claims))
     }
 
-    pub fn from_user(user: &User) -> Self {
+    pub fn from_user(_user: &User) -> Self {
         todo!()
     }
 

@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
-use env_logger;
+
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
 use log::{debug, info, trace};
@@ -28,7 +28,7 @@ fn main() {
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     debug!("DATABASE_URL={}", db_url);
     let db_conn =
-        SqliteConnection::establish(&db_url).expect(&format!("Error connecting to {}", db_url));
+        SqliteConnection::establish(&db_url).unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
     info!("connected to the database");
 
     // FIXME: make it random (more difficult for debugging)
