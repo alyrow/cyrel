@@ -5,7 +5,7 @@ use log::{debug, info};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::calendar;
+use crate::schedule;
 use crate::SETTINGS;
 
 #[derive(Debug)]
@@ -104,7 +104,7 @@ pub struct Course {
     modules: Vec<String>,
 }
 
-impl From<Course> for calendar::Course {
+impl From<Course> for schedule::Course {
     fn from(c: Course) -> Self {
         Self {
             uid: c.id,

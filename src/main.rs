@@ -2,9 +2,9 @@
 extern crate diesel;
 
 mod authentication;
-mod calendar;
 mod models;
 mod rpc;
+mod schedule;
 mod schema;
 mod settings;
 
