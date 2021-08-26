@@ -7,7 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1"
 config = "0.11"
+chrono = { version = "0.4", features = ["serde"] }
 clap = "2"
 env_logger = "0.9"
 diesel = { version = "1.4", features = ["sqlite"] }
@@ -20,5 +22,6 @@ lazy_static = "1.4"
 log = "0.4"
 pbkdf2 = "0.8"
 rand = "0.8"
+regex = "1"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }

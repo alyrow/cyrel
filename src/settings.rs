@@ -3,6 +3,12 @@ use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
+pub struct Celcat {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Jwt {
     pub secret: String,
 }
@@ -16,6 +22,7 @@ pub struct Database {
 pub struct Settings {
     pub jwt: Jwt,
     pub database: Database,
+    pub celcat: Celcat,
     pub port: u16,
 }
 
