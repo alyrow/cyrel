@@ -21,7 +21,7 @@ pub trait Rpc {
     #[rpc(name = "ping")]
     fn ping(&self) -> jsonrpc_core::Result<String>;
 
-    #[rpc(name = "login")]
+    #[rpc(name = "login", params = "named")]
     fn login(&self, username: String, password: String) -> jsonrpc_core::Result<String>;
 }
 

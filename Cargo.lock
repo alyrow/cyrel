@@ -624,8 +624,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-core"
 version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14f7f76aef2d054868398427f6c54943cf3d1caa9a7ec7d0c38d69df97a965eb"
+source = "git+https://github.com/luc65r/jsonrpc#03b0feb32b7689dd635149f69e0646bb495f9ff7"
 dependencies = [
  "futures",
  "futures-executor",
@@ -639,8 +638,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-derive"
 version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b939a78fa820cdfcb7ee7484466746a7377760970f6f9c6fe19f9edcc8a38d2"
+source = "git+https://github.com/luc65r/jsonrpc#03b0feb32b7689dd635149f69e0646bb495f9ff7"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -651,8 +649,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-http-server"
 version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1dea6e07251d9ce6a552abfb5d7ad6bc290a4596c8dcc3d795fae2bbdc1f3ff"
+source = "git+https://github.com/luc65r/jsonrpc#03b0feb32b7689dd635149f69e0646bb495f9ff7"
 dependencies = [
  "futures",
  "hyper",
@@ -667,8 +664,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-server-utils"
 version = "18.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa4fdea130485b572c39a460d50888beb00afb3e35de23ccd7fad8ff19f0e0d4"
+source = "git+https://github.com/luc65r/jsonrpc#03b0feb32b7689dd635149f69e0646bb495f9ff7"
 dependencies = [
  "bytes",
  "futures",

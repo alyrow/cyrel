@@ -14,9 +14,9 @@ clap = "2"
 env_logger = "0.9"
 diesel = { version = "1.4", features = ["sqlite"] }
 dotenv = "0.15"
-jsonrpc-core = "18"
-jsonrpc-derive = "18"
-jsonrpc-http-server = "18"
+jsonrpc-core = { git = "https://github.com/luc65r/jsonrpc" }
+jsonrpc-derive = { git = "https://github.com/luc65r/jsonrpc" }
+jsonrpc-http-server = { git = "https://github.com/luc65r/jsonrpc" }
 jsonwebtoken = "7"
 lazy_static = "1.4"
 log = "0.4"
