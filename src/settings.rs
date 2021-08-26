@@ -16,7 +16,6 @@ pub struct Database {
 pub struct Settings {
     pub jwt: Jwt,
     pub database: Database,
-    #[serde(default)]
     pub port: u16,
 }
 
