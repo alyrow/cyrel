@@ -76,7 +76,7 @@ impl Celcat {
         Ok(())
     }
 
-    pub async fn fetch(&mut self, req: Request) -> reqwest::Result<Course> {
+    pub async fn fetch(&mut self, req: Request) -> reqwest::Result<Vec<Course>> {
         self.client
             .post("https://services-web.u-cergy.fr/calendar/Home/GetCalendarData")
             .form(&req)
