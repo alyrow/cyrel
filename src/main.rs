@@ -11,7 +11,7 @@ mod settings;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
 
-use clap::{clap_app, ArgMatches};
+use clap::{clap_app, crate_authors, crate_description, crate_name, crate_version, ArgMatches};
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
@@ -28,7 +28,10 @@ use crate::settings::Settings;
 lazy_static! {
     static ref CLI: ArgMatches<'static> = clap_app!(
         cyrel =>
-            (version: "0.1")
+            (name: crate_name!())
+            (version: crate_version!())
+            (author: crate_authors!())
+            (about: crate_description!())
             (@arg CONFIG: -c --config +takes_value "config file to read")
             (@arg PORT: -p --port +takes_value "port to use")
     )
