@@ -1,3 +1,5 @@
 /target
 /.idea
 /.direnv
+/web/.idea
+/web/public/dependencies

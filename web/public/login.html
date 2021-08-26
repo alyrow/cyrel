@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta charset="UTF-8">
+    <title>Connexion</title>
+
+    <script src="dependencies/json-rpc.min.js"></script>
+    <script src="js/api.js"></script>
+
+    <script src="dependencies/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="dependencies/semantic/dist/semantic.min.css">
+    <script src="dependencies/semantic/dist/semantic.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="js/ui/ui-core.js"></script>
+    <script src="js/ui/template.js"></script>
+</head>
+<body style="height: 100%">
+<div class="ui segment regular-box" style="top: 18%;">
+    <h1 class="ui header">
+        <img class="ui image" src="logo" alt="logo">
+        <div class="content">CYREL</div>
+    </h1>
+</div>
+<div class="ui segment regular-box" style="top: 20%;">
+    <form class="ui form">
+        <div class="field">
+            <label>Nom d'utilisateur</label>
+            <input type="text" name="username" placeholder="Nom d'utilisateur">
+        </div>
+        <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" name="password" placeholder="Mot de passe">
+        </div>
+
+        <div class="ui success message">
+            <div class="header">Connecté</div>
+            <p>Vous êtes maintenant connecté !</p>
+        </div>
+
+        <div id="login" class="ui primary button">Connexion</div>
+
+        <div class="ui error message"></div>
+    </form>
+</div>
+
+<div class="ui segment regular-box" style="top: 22%;">
+    <button class="ui labeled icon button" onclick="document.location.href = 'https://github.com/alyrow/cyrel'">
+        <i class="github icon"></i>
+        Voir sur github
+    </button>
+</div>
+
+<script src="js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CYREL</title>
+
+    <script src="dependencies/json-rpc.min.js"></script>
+    <script src="js/api.js"></script>
+
+    <script src="dependencies/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="dependencies/semantic/dist/semantic.min.css">
+    <script src="dependencies/semantic/dist/semantic.min.js"></script>
+
+    <script src="js/ui/ui-core.js"></script>
+    <script src="js/ui/template.js"></script>
+</head>
+<body>
+
+<top-bar></top-bar>
+
+<test></test>
+
+<script>
+    console.log(test());
+    //console.log(test1());
+    UiCore.registerTag("test", () => {
+        console.log("New test element added!")
+    });
+
+    $('.ui.form')
+        .form({
+            fields: {
+                name: 'empty',
+                gender: 'empty',
+                username: 'empty',
+                password: ['minLength[6]', 'empty'],
+                skills: ['minCount[2]', 'empty'],
+                terms: 'checked'
+            }
+        })
+    ;
+</script>
+<script src="js/ui/top-bar.js"></script>
+</body>
+</html>
