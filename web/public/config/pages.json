@@ -1,0 +1,16 @@
+[
+  {
+    "name": "CYREL",
+    "url": "index.html",
+    "topBar": true,
+    "menu": true,
+    "showInMenu": true
+  },
+  {
+    "name": "Connexion",
+    "url": "login.html",
+    "topBar": true,
+    "menu": false,
+    "showInMenu": false
+  }
+]

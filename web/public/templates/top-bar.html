@@ -1,8 +1,14 @@
+<div class="ui left vertical menu sidebar">
+    <a for-each="pages" as="page" run-if="page.showInMenu" href="{{page.url}}" class="item">
+        {{page.name}}
+    </a>
+</div>
+
 <div class="ui container">
     <div class="ui large secondary network menu">
         <div class="item">
-            <i class="sidebar icon"></i>
-            {{page_title}}
+            <i if="menu" class="sidebar icon"></i>
         </div>
+        <div class="item">{{page_title}}</div>
     </div>
 </div>
