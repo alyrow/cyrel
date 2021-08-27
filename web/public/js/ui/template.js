@@ -1,11 +1,12 @@
 class Template {
     /**
-     * @type {(name: string, variables: any, element: HTMLElement) => Template}
+     * @type {(name: string, variables: any, element: HTMLElement, onLoaded: function) => Template}
      * @param name Name of the template file
      * @param variables Variables to inject
      * @param element The element to replace by the template
+     * @param onLoaded Function which will be executed when the template is loaded
      */
-    constructor(name, variables, element) {
+    constructor(name, variables, element, onLoaded) {
         const xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
             if (this.readyState === 4) {
@@ -19,6 +20,8 @@ class Template {
                         }
                     });
                     element.outerHTML = template;
+
+                    onLoaded();
                 }
                 if (this.status === 404) element.innerHTML = "Template not found.";
             }
