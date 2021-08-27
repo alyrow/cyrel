@@ -26,6 +26,15 @@ class Template {
                     const elems = htmlObj.getElementsByTagName("*");
                     for (let i = 0; i < elems.length; i++) {
                         const elem = elems[i];
+                        const checkIf = elem.getAttribute("if");
+                        if (checkIf) {
+                            if (!eval("variables." + checkIf)) template = template.replace(elem.outerHTML, "");
+                            else try {
+                                template = template.replace(new RegExp('if="\\S*"'), "");
+                            } catch (e) {
+                                console.error(e);
+                            }
+                        }
                         const checkFor = elem.getAttribute("for-each");
                         if (checkFor) {
                             let evaluate = "const elementsContainer = document.createElement('div');\n";
