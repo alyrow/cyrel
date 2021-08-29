@@ -1,3 +1,5 @@
+mod error;
+
 use std::sync::{Arc, Mutex};
 
 use diesel::prelude::*;
@@ -13,6 +15,7 @@ use crate::SETTINGS;
 use crate::{models::User, schema::users};
 
 pub use self::rpc_impl_Rpc::gen_server;
+pub use self::error::RpcError;
 
 #[rpc(server)]
 pub trait Rpc {
@@ -68,12 +71,7 @@ impl Rpc for RpcImpl {
                 Ok(user) => user,
                 Err(_) => {
                     warn!("{} isn't a know username", username);
-                    return Err(jsonrpc_core::Error {
-                        // TODO: define error codes
-                        code: jsonrpc_core::ErrorCode::ServerError(1),
-                        message: "unknown username".to_owned(),
-                        data: None,
-                    });
+                    return Err(RpcError::IncorrectLoginInfo.into());
                 }
             }
         };
@@ -89,12 +87,7 @@ impl Rpc for RpcImpl {
             Ok(jwt)
         } else {
             warn!("{} failed to log in", username);
-            Err(jsonrpc_core::Error {
-                // TODO: define error codes
-                code: jsonrpc_core::ErrorCode::ServerError(2),
-                message: "invalid password".to_owned(),
-                data: None,
-            })
+            Err(RpcError::IncorrectLoginInfo.into())
         }
     }
 }
