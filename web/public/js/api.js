@@ -43,4 +43,19 @@ class Api {
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
+
+    /**
+     * Function which retrieve a schedule
+     * @type {(start: string, end: string, group: number, onSuccess: function, onFailure: function) => void}
+     * @param start Start date of the schedule
+     * @param end End date of the schedule
+     * @param group Return the schedule associated with the user's group
+     * @param onSuccess When the schedule is retrieved
+     * @param onFailure When an error occur
+     */
+    getSchedule(start, end, group, onSuccess, onFailure) {
+        this.#rpc.call("schedule_get", {start: start, end: end, group: group})
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
 }

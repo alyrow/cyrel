@@ -18,3 +18,6 @@ rm -rf ./public/dependencies/semantic/Fomantic-UI-master/
 
 echo Downloading json-rpc 2.0 client...
 wget -O ./public/dependencies/json-rpc.min.js "$JSONRPC"
+
+echo Downloading svg lib...
+wget -O ./public/dependencies/svg.min.js "$SVG"

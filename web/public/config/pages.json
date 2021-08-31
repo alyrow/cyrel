@@ -7,6 +7,13 @@
     "showInMenu": true
   },
   {
+    "name": "Emploi du temps",
+    "url": "edt.html",
+    "topBar": true,
+    "menu": true,
+    "showInMenu": true
+  },
+  {
     "name": "Connexion",
     "url": "login.html",
     "topBar": true,

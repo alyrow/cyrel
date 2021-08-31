@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Emploi du temps</title>
+
+    <script src="dependencies/json-rpc.min.js"></script>
+    <script src="js/api.js"></script>
+
+    <script src="dependencies/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="dependencies/semantic/dist/semantic.min.css">
+    <script src="dependencies/semantic/dist/semantic.min.js"></script>
+    <script src="dependencies/svg.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="js/ui/ui-core.js"></script>
+    <script src="js/ui/template.js"></script>
+    <script src="js/config.js"></script>
+</head>
+<body>
+<top-bar></top-bar>
+
+<div class="ui container segment">
+    <div class="ui calendar" id="calendar"></div>
+</div>
+
+<div class="ui container segment">
+    <edt></edt>
+    <div id="edt-dimmer" class="ui active dimmer">
+        <div id="edt-loader" class="ui loader"></div>
+    </div>
+</div>
+
+<script src="js/ui/top-bar.js"></script>
+<script src="js/ui/edt.js"></script>
+</body>
+</html>
