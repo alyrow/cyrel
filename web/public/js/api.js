@@ -39,7 +39,7 @@ class Api {
      * @param onFailure When the server reject login infos
      */
     login(username, password, onSuccess, onFailure) {
-        this.#rpc.call("login", [username, password])
+        this.#rpc.call("login", {username: username, password: password})
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
