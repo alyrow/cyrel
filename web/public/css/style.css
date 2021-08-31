@@ -3,3 +3,7 @@
     max-height: 80%;
     margin: auto !important;
 }
+
+.container {
+    width: 95% !important;
+}

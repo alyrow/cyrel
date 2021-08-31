@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>CYREL</title>
 
     <script src="dependencies/json-rpc.min.js"></script>
@@ -27,19 +28,6 @@
     UiCore.registerTag("test", () => {
         console.log("New test element added!")
     });
-
-    $('.ui.form')
-        .form({
-            fields: {
-                name: 'empty',
-                gender: 'empty',
-                username: 'empty',
-                password: ['minLength[6]', 'empty'],
-                skills: ['minCount[2]', 'empty'],
-                terms: 'checked'
-            }
-        })
-    ;
 </script>
 <script src="js/ui/top-bar.js"></script>
 </body>
