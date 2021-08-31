@@ -4,19 +4,29 @@ class Api {
 
     /**
      * Create the api to interact with the backend
-     * @type {(url: string) => Api}
+     * @type {(url: string, fatalError: function) => Api}
      * @param url Url of the backend
+     * @param fatalError Function to be called on fatal error
      */
-    constructor(url) {
-        this.#rpc = simple_jsonrpc.connect_xhr(url);
+    constructor(url, fatalError) {
+        this.#rpc = simple_jsonrpc.connect_xhr(url, {
+            onerror: fatalError
+        });
     }
 
     /**
-     * Get the api
-     * @returns Api Return an instance of the api
+     * Return an instance of the api
+     * @type {() => Api}
      */
     static get backend() {
-        if (this.#backend === null) this.#backend = new Api("http://127.0.0.1:3030");
+        if (this.#backend === null) this.#backend = new Api("http://127.0.0.1:3030", e => {
+            $('body')
+                .toast({
+                    class: 'error',
+                    message: e
+                })
+            ;
+        });
         return this.#backend;
     }
 
