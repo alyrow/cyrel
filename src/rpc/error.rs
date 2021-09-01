@@ -2,8 +2,14 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum RpcError {
+    #[error("unknown error")]
+    UnknownError = 0,
+
     #[error("incorrect login information")]
     IncorrectLoginInfo = 1,
+
+    #[error("unimplemented")]
+    Unimplemented = 2,
 }
 
 impl From<RpcError> for jsonrpc_core::Error {
