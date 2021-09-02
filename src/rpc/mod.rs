@@ -13,7 +13,6 @@ use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 
 use crate::authentication::{Claims, Meta};
-use crate::schedule::{celcat, celcat::Celcat, Course};
 use crate::SETTINGS;
 use crate::{models::User, schema::users};
 
@@ -37,7 +36,7 @@ pub trait Rpc {
         start: NaiveDateTime,
         end: NaiveDateTime,
         fid: String,
-    ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>>;
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<()>>>;
 }
 
 pub struct RpcImpl {
@@ -106,27 +105,11 @@ impl Rpc for RpcImpl {
     fn schedule_get(
         &self,
         _meta: Self::Metadata,
-        start: NaiveDateTime,
-        end: NaiveDateTime,
+        _start: NaiveDateTime,
+        _end: NaiveDateTime,
         //group: celcat::ResType,
-        fid: String,
-    ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
-        Box::pin(async move {
-            let mut c = Celcat::new().await.unwrap();
-            //c.login().await.unwrap();
-            Ok(c.fetch::<Vec<celcat::Course>>(celcat::CalendarDataRequest {
-                start,
-                end,
-                res_type: celcat::ResourceType::Student,
-                cal_view: celcat::CalView::Month,
-                federation_ids: fid,
-                colour_scheme: 3,
-            })
-            .await
-            .unwrap()
-            .into_iter()
-            .map(|c| c.into())
-            .collect())
-        })
+        _fid: String,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<()>>> {
+        Box::pin(async move { todo!() })
     }
 }

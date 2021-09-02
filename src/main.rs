@@ -2,6 +2,7 @@
 extern crate diesel;
 
 mod authentication;
+mod celcat;
 mod groups;
 mod models;
 mod rpc;
