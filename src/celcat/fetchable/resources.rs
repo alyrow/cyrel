@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use serde::{de::Error, Deserialize, Deserializer, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::celcat::resource::resource_type::ResourceType as TypeResourceType;
 use crate::celcat::resource::{resource_type, FormationId, ResourceType};
@@ -57,7 +57,7 @@ where
         .into_iter()
         .map(R::from_raw)
         .collect::<anyhow::Result<Vec<R>>>()
-        .map_err(|e| D::Error::custom(e.to_string()))
+        .map_err(de::Error::custom)
 }
 
 #[derive(Debug, Deserialize)]

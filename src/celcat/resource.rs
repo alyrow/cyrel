@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 use std::str::FromStr;
 
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use void::Void;
 
@@ -98,10 +98,7 @@ impl FromStr for StudentId {
 
 // TODO: automate it
 pub mod resource_type {
-    use serde::{
-        de::{self, Error},
-        Deserialize, Deserializer, Serialize, Serializer,
-    };
+    use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
     use super::ResourceType as E;
 

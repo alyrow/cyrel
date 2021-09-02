@@ -8,8 +8,6 @@ use log::{debug, info};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-
-
 use crate::SETTINGS;
 
 use self::fetchable::Fetchable;
