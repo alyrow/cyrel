@@ -21,7 +21,7 @@ pub enum ResourceType {
 pub trait ResourceId: FromStr + Serialize + for<'de> Deserialize<'de> {}
 
 /// ID of a formation
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
 pub struct FormationId(pub String);
 impl ResourceId for FormationId {}
@@ -37,7 +37,7 @@ impl FromStr for FormationId {
 /// ID of a teacher
 ///
 /// We ignore IDs that are not numbers (like `"Vac Tempo ST 27"`).
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
 pub struct TeacherId(pub u64);
 impl ResourceId for TeacherId {}
@@ -53,7 +53,7 @@ impl FromStr for TeacherId {
 /// ID of a room
 ///
 /// We ignore IDs that are not numbers.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
 pub struct RoomId(pub u64);
 impl ResourceId for RoomId {}
@@ -67,7 +67,7 @@ impl FromStr for RoomId {
 }
 
 /// ID of a group
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
 pub struct GroupId(pub String);
 impl ResourceId for GroupId {}
@@ -83,7 +83,7 @@ impl FromStr for GroupId {
 /// ID of a student
 ///
 /// It corresponds to the number on the student id card.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
 pub struct StudentId(pub u64);
 impl ResourceId for StudentId {}
@@ -163,5 +163,80 @@ pub mod resource_type {
         {
             todo!()
         }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use serde_json::{from_value, json, to_value};
+
+        #[test]
+        fn serialize_resource_type() {
+            assert_eq!(to_value(WrapResourceType(Room)).unwrap(), json!(102));
+        }
+
+        #[test]
+        fn deserialize_resource_type() {
+            assert!(from_value::<WrapResourceType<Group>>(json!(103)).is_ok());
+            assert!(from_value::<WrapResourceType<Student>>(json!(102)).is_err());
+            assert!(from_value::<WrapResourceType<Formation>>(json!("bar")).is_err());
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::{from_value, json, to_value};
+
+    #[test]
+    fn serialize_resource_type() {
+        assert_eq!(to_value(ResourceType::Formation).unwrap(), json!(100));
+        assert_eq!(to_value(ResourceType::Student).unwrap(), json!(104));
+    }
+
+    #[test]
+    fn deserialize_resource_type() {
+        assert_eq!(
+            from_value::<ResourceType>(json!(101)).unwrap(),
+            ResourceType::Teacher
+        );
+        assert_eq!(
+            from_value::<ResourceType>(json!(103)).unwrap(),
+            ResourceType::Group
+        );
+        assert!(from_value::<ResourceType>(json!("Room")).is_err());
+        assert!(from_value::<ResourceType>(json!(null)).is_err());
+    }
+
+    #[test]
+    fn serialize_formation_id() {
+        assert_eq!(
+            to_value(FormationId("DIHB3PRF".to_owned())).unwrap(),
+            json!("DIHB3PRF")
+        );
+    }
+
+    #[test]
+    fn deserialize_formation_id() {
+        assert_eq!(
+            from_value::<FormationId>(json!("2FSA31BU")).unwrap(),
+            FormationId("2FSA31BU".to_owned())
+        );
+        assert!(from_value::<FormationId>(json!(["foo", "bar"])).is_err());
+    }
+
+    #[test]
+    fn serialize_teacher_id() {
+        assert_eq!(to_value(TeacherId(92144)).unwrap(), json!(92144));
+    }
+
+    #[test]
+    fn deserialize_teacher_id() {
+        assert_eq!(
+            from_value::<TeacherId>(json!(92624)).unwrap(),
+            TeacherId(92624)
+        );
+        assert!(from_value::<TeacherId>(json!("91402")).is_err());
     }
 }
