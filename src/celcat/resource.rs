@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 use std::str::FromStr;
 
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use void::Void;
 
@@ -98,7 +98,10 @@ impl FromStr for StudentId {
 
 // TODO: automate it
 pub mod resource_type {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde::{
+        de::{self, Error},
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
 
     use super::ResourceType as E;
 
@@ -106,35 +109,40 @@ pub mod resource_type {
     #[derive(Debug)]
     pub struct WrapResourceType<T: ResourceType>(T);
 
-    pub trait ResourceType {
+    pub trait ResourceType: Default {
         type Id: super::ResourceId;
         const N: E;
     }
 
+    #[derive(Default)]
     pub struct Formation;
     impl ResourceType for Formation {
         type Id = super::FormationId;
         const N: E = E::Formation;
     }
 
+    #[derive(Default)]
     pub struct Teacher;
     impl ResourceType for Teacher {
         type Id = super::TeacherId;
         const N: E = E::Teacher;
     }
 
+    #[derive(Default)]
     pub struct Room;
     impl ResourceType for Room {
         type Id = super::RoomId;
         const N: E = E::Room;
     }
 
+    #[derive(Default)]
     pub struct Group;
     impl ResourceType for Group {
         type Id = super::GroupId;
         const N: E = E::Group;
     }
 
+    #[derive(Default)]
     pub struct Student;
     impl ResourceType for Student {
         type Id = super::StudentId;
@@ -157,11 +165,19 @@ pub mod resource_type {
     where
         T: ResourceType,
     {
-        fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
             D: Deserializer<'de>,
         {
-            todo!()
+            let n = E::deserialize(deserializer)?;
+            if n == T::N {
+                Ok(Self(Default::default()))
+            } else {
+                Err(de::Error::invalid_value(
+                    de::Unexpected::Unsigned(n as u64),
+                    &&*(T::N as u8).to_string(),
+                ))
+            }
         }
     }
 
