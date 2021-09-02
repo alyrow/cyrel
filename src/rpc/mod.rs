@@ -2,8 +2,10 @@ mod error;
 
 use std::sync::{Arc, Mutex};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
+use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use log::{error, info, warn};
 use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
@@ -11,11 +13,12 @@ use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 
 use crate::authentication::{Claims, Meta};
+use crate::schedule::{celcat, celcat::Celcat, Course};
 use crate::SETTINGS;
 use crate::{models::User, schema::users};
 
-pub use self::rpc_impl_Rpc::gen_server;
 pub use self::error::RpcError;
+pub use self::rpc_impl_Rpc::gen_server;
 
 #[rpc(server)]
 pub trait Rpc {
@@ -26,6 +29,15 @@ pub trait Rpc {
 
     #[rpc(name = "login", params = "named")]
     fn login(&self, username: String, password: String) -> jsonrpc_core::Result<String>;
+
+    #[rpc(meta, name = "schedule_get", params = "named")]
+    fn schedule_get(
+        &self,
+        meta: Self::Metadata,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
+        fid: String,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>>;
 }
 
 pub struct RpcImpl {
@@ -89,5 +101,32 @@ impl Rpc for RpcImpl {
             warn!("{} failed to log in", username);
             Err(RpcError::IncorrectLoginInfo.into())
         }
+    }
+
+    fn schedule_get(
+        &self,
+        _meta: Self::Metadata,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
+        //group: celcat::ResType,
+        fid: String,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
+        Box::pin(async move {
+            let mut c = Celcat::new().await.unwrap();
+            //c.login().await.unwrap();
+            Ok(c.fetch::<Vec<celcat::Course>>(celcat::CalendarDataRequest {
+                start,
+                end,
+                res_type: celcat::ResourceType::Student,
+                cal_view: celcat::CalView::Month,
+                federation_ids: fid,
+                colour_scheme: 3,
+            })
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|c| c.into())
+            .collect())
+        })
     }
 }
