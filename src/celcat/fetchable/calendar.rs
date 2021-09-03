@@ -8,7 +8,7 @@ use crate::celcat::resource::ModuleId;
 
 use super::Fetchable;
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct CourseId(pub String);
 
@@ -49,14 +49,14 @@ pub struct CalendarDataRequest<T: ResourceTypeTrait> {
     #[serde(bound(serialize = "T: ResourceTypeTrait"))]
     pub res_type: WrapResourceType<T>,
     pub cal_view: CalView,
-    pub federation_ids: T::Id,
-    pub colour_scheme: i64,
+    pub federation_ids: T::Id, // TODO: array
+    pub colour_scheme: i64,    // TODO: values?
 }
 
 #[derive(Debug)]
 pub struct CalendarData<T: ResourceTypeTrait> {
-    courses: Vec<Course>,
-    request: PhantomData<T>,
+    pub courses: Vec<Course>,
+    pub request: PhantomData<T>,
 }
 
 impl<T> Fetchable for CalendarData<T>

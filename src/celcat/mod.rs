@@ -1,6 +1,6 @@
-mod entity;
-mod fetchable;
-mod resource;
+pub mod entity;
+pub mod fetchable;
+pub mod resource;
 
 use anyhow::anyhow;
 use lazy_static::lazy_static;
@@ -81,7 +81,7 @@ impl Celcat {
         Ok(())
     }
 
-    pub async fn fetch<F>(&mut self, req: F::Request) -> reqwest::Result<F>
+    pub async fn fetch<F>(&self, req: F::Request) -> reqwest::Result<F>
     where
         F: Fetchable,
     {

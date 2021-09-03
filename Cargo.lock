@@ -257,6 +257,7 @@ dependencies = [
  "diesel",
  "dotenv",
  "env_logger",
+ "futures",
  "html-escape",
  "jsonrpc-core",
  "jsonrpc-derive",

@@ -13,6 +13,8 @@ use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 
 use crate::authentication::{Claims, Meta};
+use crate::schedule::celcat::{fetch_calendar, GroupId};
+use crate::schedule::Course;
 use crate::SETTINGS;
 use crate::{models::User, schema::users};
 
@@ -35,8 +37,8 @@ pub trait Rpc {
         meta: Self::Metadata,
         start: NaiveDateTime,
         end: NaiveDateTime,
-        fid: String,
-    ) -> BoxFuture<jsonrpc_core::Result<Vec<()>>>;
+        group: GroupId,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>>;
 }
 
 pub struct RpcImpl {
@@ -105,11 +107,18 @@ impl Rpc for RpcImpl {
     fn schedule_get(
         &self,
         _meta: Self::Metadata,
-        _start: NaiveDateTime,
-        _end: NaiveDateTime,
-        //group: celcat::ResType,
-        _fid: String,
-    ) -> BoxFuture<jsonrpc_core::Result<Vec<()>>> {
-        Box::pin(async move { todo!() })
+        start: NaiveDateTime,
+        end: NaiveDateTime,
+        group: GroupId,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
+        Box::pin(async move {
+            fetch_calendar(start, end, group)
+                .await
+                .map_err(|err| jsonrpc_core::Error {
+                    code: jsonrpc_core::ErrorCode::ServerError(-32000),
+                    message: format!("{}", err),
+                    data: None,
+                })
+        })
     }
 }

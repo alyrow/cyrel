@@ -1,6 +1,6 @@
-mod calendar;
-mod event;
-mod resources;
+pub mod calendar;
+pub mod event;
+pub mod resources;
 
 use serde::{Deserialize, Serialize};
 
