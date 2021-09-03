@@ -36,34 +36,30 @@ impl FromStr for ModuleId {
 }
 
 /// ID of a teacher
-///
-/// We ignore IDs that are not numbers (like `"Vac Tempo ST 27"`).
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
-pub struct TeacherId(pub u64);
+pub struct TeacherId(pub String);
 impl ResourceId for TeacherId {}
 
 impl FromStr for TeacherId {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(u64::from_str(s)?))
+        Ok(Self(s.to_owned()))
     }
 }
 
 /// ID of a room
-///
-/// We ignore IDs that are not numbers.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
-pub struct RoomId(pub u64);
+pub struct RoomId(pub String);
 impl ResourceId for RoomId {}
 
 impl FromStr for RoomId {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(u64::from_str(s)?))
+        Ok(Self(s.to_owned()))
     }
 }
 
@@ -84,16 +80,16 @@ impl FromStr for GroupId {
 /// ID of a student
 ///
 /// It corresponds to the number on the student id card.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
-pub struct StudentId(pub u64);
+pub struct StudentId(pub String);
 impl ResourceId for StudentId {}
 
 impl FromStr for StudentId {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(u64::from_str(s)?))
+        Ok(Self(s.to_owned()))
     }
 }
 
@@ -104,43 +100,43 @@ pub mod resource_type {
     use super::ResourceType as E;
 
     /// Wrapper around a [`ResourceType`]
-    #[derive(Debug)]
-    pub struct WrapResourceType<T: ResourceTypeTrait>(T);
+    #[derive(Debug, PartialEq)]
+    pub struct WrapResourceType<T: ResourceTypeTrait>(pub T);
 
     pub trait ResourceTypeTrait: Default {
         type Id: super::ResourceId;
         const N: E;
     }
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, PartialEq)]
     pub struct Module;
     impl ResourceTypeTrait for Module {
         type Id = super::ModuleId;
         const N: E = E::Module;
     }
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, PartialEq)]
     pub struct Teacher;
     impl ResourceTypeTrait for Teacher {
         type Id = super::TeacherId;
         const N: E = E::Teacher;
     }
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, PartialEq)]
     pub struct Room;
     impl ResourceTypeTrait for Room {
         type Id = super::RoomId;
         const N: E = E::Room;
     }
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, PartialEq)]
     pub struct Group;
     impl ResourceTypeTrait for Group {
         type Id = super::GroupId;
         const N: E = E::Group;
     }
 
-    #[derive(Default, Debug)]
+    #[derive(Default, Debug, PartialEq)]
     pub struct Student;
     impl ResourceTypeTrait for Student {
         type Id = super::StudentId;
@@ -242,15 +238,17 @@ mod tests {
 
     #[test]
     fn serialize_teacher_id() {
-        assert_eq!(to_value(TeacherId(92144)).unwrap(), json!(92144));
+        assert_eq!(
+            to_value(TeacherId("92144".to_owned())).unwrap(),
+            json!("92144")
+        );
     }
 
     #[test]
     fn deserialize_teacher_id() {
         assert_eq!(
-            from_value::<TeacherId>(json!(92624)).unwrap(),
-            TeacherId(92624)
+            from_value::<TeacherId>(json!("92624")).unwrap(),
+            TeacherId("92624".to_owned())
         );
-        assert!(from_value::<TeacherId>(json!("91402")).is_err());
     }
 }

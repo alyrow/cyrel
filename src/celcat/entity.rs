@@ -42,7 +42,7 @@ pub trait EntityId: Serialize + for<'de> Deserialize<'de> {}
 
 impl<T> EntityId for T where T: ResourceId {}
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(from = "()", into = "()")]
 pub struct UnknownId;
 impl EntityId for UnknownId {}
@@ -63,8 +63,8 @@ pub mod entity_type {
     use super::EntityType as E;
     use crate::celcat::resource::resource_type::ResourceTypeTrait;
 
-    #[derive(Debug)]
-    pub struct WrapEntityType<T: EntityTypeTrait>(T);
+    #[derive(Debug, PartialEq)]
+    pub struct WrapEntityType<T: EntityTypeTrait>(pub T);
 
     pub trait EntityTypeTrait: Default {
         type Id: super::EntityId;
@@ -79,7 +79,7 @@ pub mod entity_type {
         const N: E = E::Resource(T::N);
     }
 
-    #[derive(Debug, Default)]
+    #[derive(Debug, Default, PartialEq)]
     pub struct Unknown;
     impl EntityTypeTrait for Unknown {
         type Id = super::UnknownId;

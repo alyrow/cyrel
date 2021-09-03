@@ -151,7 +151,7 @@ mod tests {
 
             let data = fs::read_to_string(&path).unwrap();
             from_str::<CalendarData<Student>>(&data)
-                .unwrap_or_else(|_| panic!("{}", path.to_str().unwrap().to_string()));
+                .unwrap_or_else(|e| panic!("{}: {}", path.to_str().unwrap().to_string(), e));
         }
     }
 }
