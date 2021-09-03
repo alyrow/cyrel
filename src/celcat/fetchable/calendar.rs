@@ -4,14 +4,15 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 use crate::celcat::resource::resource_type::{ResourceType, WrapResourceType};
+use crate::celcat::resource::ModuleId;
 
 use super::Fetchable;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[repr(transparent)]
 pub struct CourseId(pub String);
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Course {
     pub id: CourseId,
@@ -21,11 +22,13 @@ pub struct Course {
     pub description: String,
     pub background_color: String,
     pub text_color: String,
-    pub departement: Option<String>,    // TODO
-    pub faculty: Option<String>,        // TODO
-    pub event_category: Option<String>, // TODO
-    pub sites: Option<Vec<String>>,     // TODO
-    pub modules: Option<Vec<String>>,   // TODO
+    pub department: Option<String>,
+    pub faculty: Option<String>,
+    pub event_category: Option<String>,
+    pub sites: Option<Vec<String>>,
+    pub modules: Option<Vec<ModuleId>>,
+    pub register_status: i64,
+    pub student_mark: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -64,4 +67,57 @@ where
     type Request = CalendarDataRequest<T>;
 
     const METHOD_NAME: &'static str = "GetCalendarData";
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::NaiveDate;
+    use serde_json::{from_value, json};
+
+    #[test]
+    fn deserialize_course() {
+        assert_eq!(
+            from_value::<Course>(json!({
+                "id": "-1347128091:-662573064:1:42367:4",
+                "start": "2021-09-22T14:30:00",
+                "end": "2021-09-22T17:45:00",
+                "allDay": false,
+                "description": "Some description",
+                "backgroundColor": "#FF0000",
+                "textColor": "#ffffff",
+                "department": "1 : UFR DROIT",
+                "faculty": null,
+                "eventCategory": "CM",
+                "sites": [
+                    "CHENES"
+                ],
+                "modules": [
+                    "1BAIJU1M"
+                ],
+                "registerStatus": 2,
+                "studentMark": 0,
+                "custom1": null,
+                "custom2": null,
+                "custom3": null
+            }))
+            .unwrap(),
+            Course {
+                id: CourseId("-1347128091:-662573064:1:42367:4".to_owned()),
+                start: NaiveDate::from_ymd(2021, 9, 22).and_hms(14, 30, 0),
+                end: NaiveDate::from_ymd(2021, 9, 22).and_hms(17, 45, 0),
+                all_day: false,
+                description: "Some description".to_owned(),
+                background_color: "#FF0000".to_owned(),
+                text_color: "#ffffff".to_owned(),
+                department: Some("1 : UFR DROIT".to_owned()),
+                faculty: None,
+                event_category: Some("CM".to_owned()),
+                sites: Some(vec!["CHENES".to_owned()]),
+                modules: Some(vec![ModuleId("1BAIJU1M".to_owned())]),
+                register_status: 2,
+                student_mark: 0,
+            }
+        );
+    }
 }

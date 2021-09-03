@@ -12,7 +12,7 @@ use void::Void;
 #[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, FromPrimitive)]
 #[repr(u8)]
 pub enum ResourceType {
-    Formation = 100,
+    Module = 100,
     Teacher = 101,
     Room = 102,
     Group = 103,
@@ -24,10 +24,10 @@ pub trait ResourceId: FromStr + Serialize + for<'de> Deserialize<'de> {}
 /// ID of a formation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[repr(transparent)]
-pub struct FormationId(pub String);
-impl ResourceId for FormationId {}
+pub struct ModuleId(pub String);
+impl ResourceId for ModuleId {}
 
-impl FromStr for FormationId {
+impl FromStr for ModuleId {
     type Err = Void;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -113,10 +113,10 @@ pub mod resource_type {
     }
 
     #[derive(Default)]
-    pub struct Formation;
-    impl ResourceType for Formation {
-        type Id = super::FormationId;
-        const N: E = E::Formation;
+    pub struct Module;
+    impl ResourceType for Module {
+        type Id = super::ModuleId;
+        const N: E = E::Module;
     }
 
     #[derive(Default)]
@@ -193,7 +193,7 @@ pub mod resource_type {
         fn deserialize_resource_type() {
             assert!(from_value::<WrapResourceType<Group>>(json!(103)).is_ok());
             assert!(from_value::<WrapResourceType<Student>>(json!(102)).is_err());
-            assert!(from_value::<WrapResourceType<Formation>>(json!("bar")).is_err());
+            assert!(from_value::<WrapResourceType<Module>>(json!("bar")).is_err());
         }
     }
 }
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn serialize_resource_type() {
-        assert_eq!(to_value(ResourceType::Formation).unwrap(), json!(100));
+        assert_eq!(to_value(ResourceType::Module).unwrap(), json!(100));
         assert_eq!(to_value(ResourceType::Student).unwrap(), json!(104));
     }
 
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn serialize_formation_id() {
         assert_eq!(
-            to_value(FormationId("DIHB3PRF".to_owned())).unwrap(),
+            to_value(ModuleId("DIHB3PRF".to_owned())).unwrap(),
             json!("DIHB3PRF")
         );
     }
@@ -234,10 +234,10 @@ mod tests {
     #[test]
     fn deserialize_formation_id() {
         assert_eq!(
-            from_value::<FormationId>(json!("2FSA31BU")).unwrap(),
-            FormationId("2FSA31BU".to_owned())
+            from_value::<ModuleId>(json!("2FSA31BU")).unwrap(),
+            ModuleId("2FSA31BU".to_owned())
         );
-        assert!(from_value::<FormationId>(json!(["foo", "bar"])).is_err());
+        assert!(from_value::<ModuleId>(json!(["foo", "bar"])).is_err());
     }
 
     #[test]

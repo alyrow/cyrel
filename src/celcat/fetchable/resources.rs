@@ -3,7 +3,7 @@ use std::str::FromStr;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
 use crate::celcat::resource::resource_type::ResourceType as TypeResourceType;
-use crate::celcat::resource::{resource_type, FormationId, ResourceType};
+use crate::celcat::resource::{resource_type, ModuleId, ResourceType};
 
 use super::Fetchable;
 
@@ -69,15 +69,15 @@ pub struct RawResource {
 
 #[derive(Debug)]
 pub struct Formation {
-    pub id: FormationId,
+    pub id: ModuleId,
 }
 
 impl Resource for Formation {
-    type ResourceType = resource_type::Formation;
+    type ResourceType = resource_type::Module;
 
     fn from_raw(raw: RawResource) -> anyhow::Result<Self> {
         Ok(Self {
-            id: FormationId::from_str(&raw.id)?,
+            id: ModuleId::from_str(&raw.id)?,
         })
     }
 
