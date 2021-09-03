@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
 
-use crate::celcat::resource::resource_type::ResourceType as TypeResourceType;
+use crate::celcat::resource::resource_type::ResourceTypeTrait;
 use crate::celcat::resource::{resource_type, ModuleId, ResourceType};
 
 use super::Fetchable;
@@ -17,12 +17,12 @@ pub struct ResourceList<R: Resource> {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ResourceListRequest<T: resource_type::ResourceType> {
+pub struct ResourceListRequest<T: resource_type::ResourceTypeTrait> {
     pub my_resources: bool,
     pub search_term: String,
     pub page_size: u64,
     pub page_numer: u64,
-    #[serde(bound(serialize = "T: resource_type::ResourceType"))]
+    #[serde(bound(serialize = "T: ResourceTypeTrait"))]
     pub res_type: resource_type::WrapResourceType<T>,
     /// Milliseconds since Epoch
     #[serde(rename = "_")]
@@ -39,13 +39,13 @@ where
 }
 
 pub trait Resource: Sized {
-    type ResourceType: TypeResourceType;
+    type ResourceType: ResourceTypeTrait;
 
     const RESOURCE_TYPE: ResourceType = Self::ResourceType::N;
 
     fn from_raw(raw: RawResource) -> anyhow::Result<Self>;
 
-    fn id(&self) -> <Self::ResourceType as TypeResourceType>::Id;
+    fn id(&self) -> <Self::ResourceType as ResourceTypeTrait>::Id;
 }
 
 fn deserialize_resources<'de, D, R>(deserializer: D) -> Result<Vec<R>, D::Error>
@@ -81,7 +81,7 @@ impl Resource for Formation {
         })
     }
 
-    fn id(&self) -> <Self::ResourceType as TypeResourceType>::Id {
+    fn id(&self) -> <Self::ResourceType as ResourceTypeTrait>::Id {
         self.id.clone()
     }
 }

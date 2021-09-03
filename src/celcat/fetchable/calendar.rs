@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::celcat::resource::resource_type::{ResourceType, WrapResourceType};
+use crate::celcat::resource::resource_type::{ResourceTypeTrait, WrapResourceType};
 use crate::celcat::resource::ModuleId;
 
 use super::Fetchable;
@@ -43,10 +43,10 @@ pub enum CalView {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CalendarDataRequest<T: ResourceType> {
+pub struct CalendarDataRequest<T: ResourceTypeTrait> {
     pub start: NaiveDateTime,
     pub end: NaiveDateTime,
-    #[serde(bound(serialize = "T: ResourceType"))]
+    #[serde(bound(serialize = "T: ResourceTypeTrait"))]
     pub res_type: WrapResourceType<T>,
     pub cal_view: CalView,
     pub federation_ids: T::Id,
@@ -54,14 +54,14 @@ pub struct CalendarDataRequest<T: ResourceType> {
 }
 
 #[derive(Debug)]
-pub struct CalendarData<T: ResourceType> {
+pub struct CalendarData<T: ResourceTypeTrait> {
     courses: Vec<Course>,
     request: PhantomData<T>,
 }
 
 impl<T> Fetchable for CalendarData<T>
 where
-    T: ResourceType,
+    T: ResourceTypeTrait,
 {
     type Request = CalendarDataRequest<T>;
 
@@ -70,7 +70,7 @@ where
 
 impl<'de, T> Deserialize<'de> for CalendarData<T>
 where
-    T: ResourceType,
+    T: ResourceTypeTrait,
 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -89,7 +89,6 @@ mod tests {
     use crate::celcat::resource::resource_type::Student;
     use chrono::NaiveDate;
     use serde_json::{from_str, from_value, json};
-    use std::include_str;
 
     #[test]
     fn deserialize_course() {
@@ -146,12 +145,13 @@ mod tests {
 
         for entry in fs::read_dir("tests/resources/calendar_data").unwrap() {
             let path = entry.unwrap().path();
-            if !path.is_file() && path.extension() != Some(OsStr::new("json")) {
+            if !path.is_file() || path.extension() != Some(OsStr::new("json")) {
                 continue;
             }
 
             let data = fs::read_to_string(&path).unwrap();
-            from_str::<CalendarData<Student>>(&data).expect(path.to_str().unwrap());
+            from_str::<CalendarData<Student>>(&data)
+                .unwrap_or_else(|_| panic!("{}", path.to_str().unwrap().to_string()));
         }
     }
 }

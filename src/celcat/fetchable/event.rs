@@ -1,24 +1,28 @@
 use serde::{Deserialize, Serialize};
 
-use crate::celcat::EntityType;
+use crate::celcat::entity::entity_type::{EntityTypeTrait, WrapEntityType};
+use crate::celcat::entity::{entity_type, UnknownId};
+use crate::celcat::resource::resource_type;
 
+use super::calendar::CourseId;
 use super::Fetchable;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SideBarEvent {
-    pub federation_id: Option<String>, // TODO
-    pub entity_type: EntityType,
+    pub federation_id: UnknownId,
+    pub entity_type: WrapEntityType<entity_type::Unknown>,
     pub elements: Vec<SideBarEventElement>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SideBarEventElement {
-    pub label: SideBarEventElementLabel,
+pub struct RawSideBarEventElement<T: EntityTypeTrait> {
     pub content: Option<String>,
-    pub federation_id: Option<String>, // TODO
-    pub entity_type: EntityType,
+    #[serde(bound(deserialize = "T: EntityTypeTrait"))]
+    pub federation_id: T::Id,
+    #[serde(bound(deserialize = "T: EntityTypeTrait"))]
+    pub entity_type: WrapEntityType<T>,
     pub assignment_context: Option<String>,
     pub contains_hyperlinks: bool,
     pub is_notes: bool,
@@ -26,25 +30,26 @@ pub struct SideBarEventElement {
 }
 
 #[derive(Debug, Deserialize)]
-pub enum SideBarEventElementLabel {
-    Time,
+#[serde(tag = "label")]
+pub enum SideBarEventElement {
+    Time(RawSideBarEventElement<entity_type::Unknown>),
     #[serde(rename = "Catégorie")]
-    Category,
+    Category(RawSideBarEventElement<entity_type::Unknown>),
     #[serde(rename = "Matière")]
-    Subject,
+    Module(RawSideBarEventElement<resource_type::Module>),
     #[serde(rename = "Salle")]
-    Room,
+    Room(RawSideBarEventElement<resource_type::Room>),
     #[serde(rename = "Enseignant")]
-    Teacher,
+    Teacher(RawSideBarEventElement<resource_type::Teacher>),
     #[serde(rename = "Notes")]
-    Grades,
-    Name,
+    Grades(RawSideBarEventElement<entity_type::Unknown>),
+    Name(RawSideBarEventElement<entity_type::Unknown>),
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SideBarEventRequest {
-    pub event_id: String,
+    pub event_id: CourseId,
 }
 
 impl Fetchable for SideBarEvent {

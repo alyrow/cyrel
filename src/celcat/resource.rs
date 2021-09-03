@@ -105,51 +105,51 @@ pub mod resource_type {
 
     /// Wrapper around a [`ResourceType`]
     #[derive(Debug)]
-    pub struct WrapResourceType<T: ResourceType>(T);
+    pub struct WrapResourceType<T: ResourceTypeTrait>(T);
 
-    pub trait ResourceType: Default {
+    pub trait ResourceTypeTrait: Default {
         type Id: super::ResourceId;
         const N: E;
     }
 
-    #[derive(Default)]
+    #[derive(Default, Debug)]
     pub struct Module;
-    impl ResourceType for Module {
+    impl ResourceTypeTrait for Module {
         type Id = super::ModuleId;
         const N: E = E::Module;
     }
 
-    #[derive(Default)]
+    #[derive(Default, Debug)]
     pub struct Teacher;
-    impl ResourceType for Teacher {
+    impl ResourceTypeTrait for Teacher {
         type Id = super::TeacherId;
         const N: E = E::Teacher;
     }
 
-    #[derive(Default)]
+    #[derive(Default, Debug)]
     pub struct Room;
-    impl ResourceType for Room {
+    impl ResourceTypeTrait for Room {
         type Id = super::RoomId;
         const N: E = E::Room;
     }
 
-    #[derive(Default)]
+    #[derive(Default, Debug)]
     pub struct Group;
-    impl ResourceType for Group {
+    impl ResourceTypeTrait for Group {
         type Id = super::GroupId;
         const N: E = E::Group;
     }
 
-    #[derive(Default)]
+    #[derive(Default, Debug)]
     pub struct Student;
-    impl ResourceType for Student {
+    impl ResourceTypeTrait for Student {
         type Id = super::StudentId;
         const N: E = E::Student;
     }
 
     impl<T> Serialize for WrapResourceType<T>
     where
-        T: ResourceType,
+        T: ResourceTypeTrait,
     {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
@@ -161,7 +161,7 @@ pub mod resource_type {
 
     impl<'de, T> Deserialize<'de> for WrapResourceType<T>
     where
-        T: ResourceType,
+        T: ResourceTypeTrait,
     {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
