@@ -191,7 +191,7 @@ pub mod resource_type {
 
         #[test]
         fn deserialize_resource_type() {
-            assert!(from_value::<WrapResourceType<Group>>(json!(103)).is_ok());
+            from_value::<WrapResourceType<Group>>(json!(103)).unwrap();
             assert!(from_value::<WrapResourceType<Student>>(json!(102)).is_err());
             assert!(from_value::<WrapResourceType<Module>>(json!("bar")).is_err());
         }

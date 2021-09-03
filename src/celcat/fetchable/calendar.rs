@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::celcat::resource::resource_type::{ResourceType, WrapResourceType};
 use crate::celcat::resource::ModuleId;
@@ -53,8 +53,7 @@ pub struct CalendarDataRequest<T: ResourceType> {
     pub colour_scheme: i64,
 }
 
-#[derive(Debug, Deserialize)]
-// TODO: serde
+#[derive(Debug)]
 pub struct CalendarData<T: ResourceType> {
     courses: Vec<Course>,
     request: PhantomData<T>,
@@ -69,11 +68,28 @@ where
     const METHOD_NAME: &'static str = "GetCalendarData";
 }
 
+impl<'de, T> Deserialize<'de> for CalendarData<T>
+where
+    T: ResourceType,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Vec::<Course>::deserialize(deserializer).map(|cs| CalendarData {
+            courses: cs,
+            request: PhantomData,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::celcat::resource::resource_type::Student;
     use chrono::NaiveDate;
-    use serde_json::{from_value, json};
+    use serde_json::{from_str, from_value, json};
+    use std::include_str;
 
     #[test]
     fn deserialize_course() {
@@ -119,5 +135,23 @@ mod tests {
                 student_mark: 0,
             }
         );
+    }
+
+    #[test]
+    fn deserialize_calendar_data() {
+        from_value::<CalendarData<Student>>(json!([])).unwrap();
+
+        use std::ffi::OsStr;
+        use std::fs;
+
+        for entry in fs::read_dir("tests/resources/calendar_data").unwrap() {
+            let path = entry.unwrap().path();
+            if !path.is_file() && path.extension() != Some(OsStr::new("json")) {
+                continue;
+            }
+
+            let data = fs::read_to_string(&path).unwrap();
+            from_str::<CalendarData<Student>>(&data).expect(path.to_str().unwrap());
+        }
     }
 }
