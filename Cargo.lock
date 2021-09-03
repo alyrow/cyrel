@@ -264,6 +264,8 @@ dependencies = [
  "jsonwebtoken",
  "lazy_static",
  "log",
+ "num-derive",
+ "num-traits 0.2.14",
  "pbkdf2",
  "rand",
  "regex",
@@ -908,6 +910,17 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits 0.2.14",
+]
+
+[[package]]
+name = "num-derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -1,6 +1,7 @@
 use std::num::ParseIntError;
 use std::str::FromStr;
 
+use num_derive::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use void::Void;
@@ -8,7 +9,7 @@ use void::Void;
 /// Runtime representation of the type of a resource
 ///
 /// [`resource_type::ResourceType`] for a compile-time representation.
-#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq, Debug, FromPrimitive)]
 #[repr(u8)]
 pub enum ResourceType {
     Formation = 100,

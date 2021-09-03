@@ -21,6 +21,8 @@ jsonrpc-http-server = { git = "https://github.com/luc65r/jsonrpc" }
 jsonwebtoken = "7"
 lazy_static = "1.4"
 log = "0.4"
+num-derive = "0.3"
+num-traits = "0.2"
 pbkdf2 = "0.8"
 rand = "0.8"
 regex = "1"
