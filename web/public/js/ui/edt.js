@@ -1,5 +1,6 @@
 class Edt {
     svg;
+    id;
 
     /**
      * Create a schedule
@@ -15,7 +16,48 @@ class Edt {
     constructor(element, lines, spacing, dayHeight, dayLength, margin, theme) {
         if (!element.id)
             element.id = (Math.random() * 9992354).toString(36);
+        this.id = element.id;
         this.svg = this.#drawTable(element.id, lines, spacing, dayHeight, dayLength, margin, theme);
+    }
+
+    /**
+     * Set the schedule
+     * @type {(courses: any[]) => void}
+     * @param courses Array of course
+     */
+    setEdt(courses) {
+        for (let i = 0; i < document.getElementById(this.id).getElementsByTagName("svg").length; i++) {
+            document.getElementById(this.id).removeChild(document.getElementById(this.id).getElementsByTagName("svg")[i]);
+        }
+        this.svg = this.#drawTable(this.id, this.svg._lines, this.svg._spacing, this.svg._dayHeight, this.svg._dayLength, this.svg._margin, this.svg._theme);
+        const svg = document.getElementsByTagName("svg")[0];
+        svg.removeAttribute('height');
+        svg.setAttribute("width", "100%");
+        svg.setAttribute("viewBox", "0 0 "+this.svg._width+" "+this.svg._height+"");
+        courses.forEach(course => {
+            const start = new Date(course.start);
+            const end = new Date(course.end);
+            const name = course.module? course.module: (course.description? course.description: (course.category? course.category: ""));
+            const teacher = course.teacher? course.teacher: "";
+            this.#drawCourse(this.svg, name, this.svg._days[start.getDay() - 1], start, end, teacher, this.#colorEvent(course.category, this.svg._theme));
+        });
+    }
+
+    /**
+     * Return a color associated with an event type
+     * @type {(event: string, theme: any) => string}
+     * @param event Event name
+     * @param theme Theme
+     */
+    #colorEvent(event, theme) {
+        switch (event) {
+            case "TD": return theme.td
+            case "TP": return theme.tp
+            case "CM": return theme.cm
+            case "Examens": return theme.exam
+            case "Tiers temps": return theme.tiers
+            default: return "#1e7b91"
+        }
     }
 
     /**
@@ -230,42 +272,53 @@ UiCore.registerTag("edt", element => {
     svg.removeAttribute('height');
     svg.setAttribute("width", "100%");
     svg.setAttribute("viewBox", "0 0 "+edt.svg._width+" "+edt.svg._height+"");
+
+    const onSelect = function(date) {
+        Edt.setEdtContainerState(Edt.edtContainerState.LOADING);
+        let startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        let endDate = new Date(startDate);
+        const diffMonday = startDate.getDay() - 1;
+        const diffSaturday = 6 - endDate.getDay();
+        startDate.setHours(-24 * diffMonday);
+        endDate.setHours(24 * diffSaturday);
+        const isoDate = (iso_str) => {
+            if (iso_str.indexOf("Z") === iso_str.length - 1) return iso_str.slice(0, iso_str.length - 1);
+            else return iso_str;
+        };
+        Api.backend.getSchedule(isoDate(startDate.toISOString()), isoDate(endDate.toISOString()), "1B01A1PRSA", reponse => {
+            Edt.setEdtContainerState(Edt.edtContainerState.READY);
+            console.log(reponse)
+            edt.setEdt(reponse);
+        }, err => {
+            Edt.setEdtContainerState(Edt.edtContainerState.ERROR);
+            $('body')
+                .toast({
+                    class: 'error',
+                    message: err.message
+                })
+            ;
+        });
+    };
+
+    onSelect(new Date());
+
+    $('#calendar')
+        .calendar({
+            type: 'date',
+            firstDayOfWeek: 1,
+            text: {
+                days: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
+                months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', `Juillet`, 'Août', 'Septembre', 'Octobre', 'Novembre', 'Decembre'],
+                monthsShort: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
+                today: 'Aujourd\'hui',
+                now: 'Maintenant',
+                am: 'AM',
+                pm: 'PM'
+            },
+            disabledDaysOfWeek: [6, 0],
+            onSelect: onSelect
+        })
+    ;
 });
 
-$('#calendar')
-    .calendar({
-        type: 'date',
-        firstDayOfWeek: 1,
-        text: {
-            days: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
-            months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', `Juillet`, 'Août', 'Septembre', 'Octobre', 'Novembre', 'Decembre'],
-            monthsShort: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
-            today: 'Aujourd\'hui',
-            now: 'Maintenant',
-            am: 'AM',
-            pm: 'PM'
-        },
-        disabledDaysOfWeek: [6, 0],
-        onSelect: function(date) {
-            Edt.setEdtContainerState(Edt.edtContainerState.LOADING);
-            let startDate = new Date(date);
-            startDate.setHours(0, 0, 0, 0);
-            let endDate = new Date(startDate);
-            const diffMonday = startDate.getDay() - 1;
-            const diffSaturday = 6 - endDate.getDay();
-            startDate.setHours(-24 * diffMonday);
-            endDate.setHours(24 * diffSaturday);
-            Api.backend.getSchedule(startDate.toDateString(), endDate.toDateString(), 0, edt => {
-                Edt.setEdtContainerState(Edt.edtContainerState.READY);
-            }, err => {
-                Edt.setEdtContainerState(Edt.edtContainerState.ERROR);
-                $('body')
-                    .toast({
-                        class: 'error',
-                        message: err.message
-                    })
-                ;
-            });
-        }
-    })
-;
