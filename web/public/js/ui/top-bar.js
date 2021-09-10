@@ -14,7 +14,11 @@ class TopBar {
                 thisPage = page;
         });
 
-        new Template("top-bar", {"page_title": title, "pages": pagesConf, "menu": thisPage && thisPage.menu}, element, () => {
+        new Template("top-bar", {
+            "page_title": title,
+            "pages": pagesConf,
+            "menu": thisPage && thisPage.menu
+        }, element, () => {
             if (thisPage && thisPage.menu) {
                 $('.ui.left.vertical.menu.sidebar').first()
                     .sidebar('attach events', '.sidebar.icon')
