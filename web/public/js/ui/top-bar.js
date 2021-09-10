@@ -9,7 +9,9 @@ class TopBar {
     constructor(element, title, pagesConf) {
         let thisPage = null;
         pagesConf.forEach(page => {
-            if (document.location.pathname.indexOf(page.url) !== -1) thisPage = page;
+            if (document.location.pathname.indexOf(page.url) === 0 || (page.url.indexOf("/index.html") !== -1 &&
+                document.location.pathname.indexOf(page.url.replace("/index.html", "/")) === 0))
+                thisPage = page;
         });
 
         new Template("top-bar", {"page_title": title, "pages": pagesConf, "menu": thisPage && thisPage.menu}, element, () => {
