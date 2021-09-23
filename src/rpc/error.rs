@@ -8,6 +8,12 @@ pub enum RpcError {
     #[error("incorrect login information")]
     IncorrectLoginInfo = 1,
 
+    #[error("already registered")]
+    AlreadyRegistered = 3,
+
+    #[error("the token was already used")]
+    RegistrationTokenUsed = 4,
+
     #[error("unimplemented")]
     Unimplemented = 2,
 }

@@ -3,6 +3,13 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
 use crate::models::User;
+use chrono::Utc;
+use pbkdf2::password_hash::{PasswordHash, PasswordHasher, Salt};
+use pbkdf2::Pbkdf2;
+use std::collections::HashMap;
+use std::iter::Map;
+use std::time::SystemTime;
+use uuid::Uuid;
 
 #[derive(Debug, Default, Clone)]
 pub struct Meta {
@@ -46,5 +53,27 @@ impl Claims {
             self,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
+    }
+}
+
+pub struct HashFunction {}
+
+impl HashFunction {
+    pub fn hash_password(password: String, salt: String) -> String {
+        Pbkdf2
+            .hash_password_simple(password.as_bytes(), &Salt::new(&*salt).unwrap())
+            .unwrap()
+            .to_string()
+    }
+}
+
+pub struct Register {
+    pub tokens: HashMap<String, User>,
+}
+
+impl Register {
+    pub fn put_user(&mut self, hash: String, user: User) -> () {
+        self.tokens.insert(hash, user);
+        ()
     }
 }

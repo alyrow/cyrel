@@ -9,6 +9,7 @@ mod rpc;
 mod schedule;
 mod schema;
 mod settings;
+mod users;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
@@ -23,9 +24,11 @@ use lazy_static::lazy_static;
 use log::{debug, info, trace};
 use rand::prelude::*;
 
-use crate::authentication::Meta;
+use crate::authentication::{Meta, Register};
+use crate::models::User;
 use crate::rpc::{gen_server::Rpc, RpcImpl};
 use crate::settings::Settings;
+use std::collections::HashMap;
 
 lazy_static! {
     static ref CLI: ArgMatches<'static> = clap_app!(
@@ -58,6 +61,9 @@ fn main() {
     let rpc = RpcImpl {
         db: Arc::new(Mutex::new(db_conn)),
         rng: StdRng::from_entropy(),
+        register: Arc::new(Mutex::new(Register {
+            tokens: HashMap::<String, User>::new(),
+        })),
     };
 
     io.extend_with(rpc.to_delegate());

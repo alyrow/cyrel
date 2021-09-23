@@ -19,10 +19,19 @@ pub struct Database {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Smtp {
+    pub from: String,
+    pub username: String,
+    pub password: String,
+    pub server: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub jwt: Jwt,
     pub database: Database,
     pub celcat: Celcat,
+    pub smtp: Smtp,
     pub port: u16,
 }
 

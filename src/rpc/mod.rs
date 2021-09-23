@@ -1,6 +1,6 @@
 mod error;
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -8,11 +8,11 @@ use diesel::sqlite::SqliteConnection;
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use log::{error, info, warn};
-use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
-use pbkdf2::Pbkdf2;
+use pbkdf2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, Salt};
+use pbkdf2::{Algorithm, Params, Pbkdf2};
 use rand::prelude::StdRng;
 
-use crate::authentication::{Claims, Meta};
+use crate::authentication::{Claims, HashFunction, Meta, Register};
 use crate::schedule::celcat::{fetch_calendar, GroupId};
 use crate::schedule::Course;
 use crate::SETTINGS;
@@ -20,6 +20,12 @@ use crate::{models::User, schema::users};
 
 pub use self::error::RpcError;
 pub use self::rpc_impl_Rpc::gen_server;
+use crate::models::NewUser;
+use crate::users::Email;
+use diesel::dsl::exists;
+use diesel::select;
+use std::ptr::null;
+use uuid::Uuid;
 
 #[rpc(server)]
 pub trait Rpc {
@@ -30,6 +36,23 @@ pub trait Rpc {
 
     #[rpc(name = "login", params = "named")]
     fn login(&self, username: String, password: String) -> jsonrpc_core::Result<String>;
+
+    #[rpc(name = "register_1", params = "named")]
+    fn register_1(
+        &self,
+        ldap: i32,
+        department: String,
+        email: String,
+    ) -> jsonrpc_core::Result<String>;
+
+    #[rpc(name = "register_2", params = "named")]
+    fn register_2(
+        &self,
+        hash: String,
+        username: String,
+        password: String,
+        groups: i32,
+    ) -> jsonrpc_core::Result<String>;
 
     #[rpc(meta, name = "schedule_get", params = "named")]
     fn schedule_get(
@@ -44,6 +67,7 @@ pub trait Rpc {
 pub struct RpcImpl {
     pub db: Arc<Mutex<SqliteConnection>>,
     pub rng: StdRng,
+    pub register: Arc<Mutex<Register>>,
 }
 
 macro_rules! server_error {
@@ -69,6 +93,117 @@ impl Rpc for RpcImpl {
     fn ping(&self) -> jsonrpc_core::Result<String> {
         info!("pinged");
         Ok("pong".to_owned())
+    }
+
+    fn register_1(
+        &self,
+        ldap: i32,
+        department: String,
+        email: String,
+    ) -> jsonrpc_core::Result<String> {
+        let user: User = {
+            let db = server_error! {
+                self.db.lock()
+            };
+
+            match users::dsl::users
+                .filter(users::dsl::id.eq(&ldap))
+                .first::<User>(&*db)
+            {
+                Ok(_) => {
+                    warn!("user {} is already registered", ldap);
+                    return Err(RpcError::AlreadyRegistered.into());
+                }
+                Err(_) => User {
+                    id: ldap,
+                    username: "".to_string(),
+                    email: email.to_owned(),
+                    password: "".to_string(),
+                    groups: -1,
+                },
+            }
+        };
+
+        let hash = uuid::Uuid::new_v4().to_string();
+        info!("{}", hash);
+        let mut register = server_error! {
+            self.register.lock()
+        };
+        register.put_user(hash.to_owned(), user);
+        let email_response = Email::send_verification_email(email.to_owned(), department, hash);
+        if !email_response.is_positive() {
+            warn!("{}", email_response.code().to_string());
+            return Err(RpcError::UnknownError.into());
+        }
+
+        Ok("Code sent".to_string())
+    }
+
+    fn register_2(
+        &self,
+        hash: String,
+        username: String,
+        password: String,
+        groups: i32,
+    ) -> jsonrpc_core::Result<String> {
+        let mut register = server_error! {
+            self.register.lock()
+        };
+
+        if !register.tokens.contains_key(&*hash.to_owned()) {
+            warn!(
+                "Someone tried to use an used or inexistant token: {}",
+                hash.to_owned()
+            );
+            return Err(RpcError::RegistrationTokenUsed.into());
+        }
+        let mut user: User = {
+            let db = server_error! {
+                self.db.lock()
+            };
+
+            match users::dsl::users
+                .filter(users::dsl::username.eq(&username))
+                .first::<User>(&*db)
+            {
+                Ok(_) => {
+                    warn!("{} is a used username", username);
+                    return Err(RpcError::IncorrectLoginInfo.into());
+                }
+                Err(_) => User {
+                    id: -1,
+                    username: username.to_owned(),
+                    email: "".to_string(),
+                    password: "".to_string(),
+                    groups: groups.to_owned(),
+                },
+            }
+        };
+        let user_saved = register.tokens.get(&hash).unwrap();
+        user.id = user_saved.id.to_owned();
+        user.email = user_saved.email.to_owned();
+        let id_str = user.id.to_string();
+        let pass_hasher = HashFunction::hash_password(password.to_owned(), id_str.to_owned());
+        user.password = pass_hasher;
+        let new_user = NewUser {
+            id: user.id.to_owned(),
+            username: &*user.username.to_owned(),
+            email: &*user.email.to_owned(),
+            password: &*user.password.to_owned(),
+            groups: user.groups.to_owned(),
+        };
+        let db = server_error! {
+            self.db.lock()
+        };
+        let insertion = diesel::insert_into(users::dsl::users)
+            .values(new_user)
+            .execute(&*db);
+        if insertion.is_err() {
+            warn!("{}", insertion.err().unwrap().to_string());
+            return Err(RpcError::Unimplemented.into());
+        }
+        register.tokens.remove(&*hash);
+        Ok("Account created!".to_string())
     }
 
     fn login(&self, username: String, password: String) -> jsonrpc_core::Result<String> {
