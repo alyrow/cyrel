@@ -7,3 +7,11 @@ table! {
         groups -> Integer,
     }
 }
+
+table! {
+    departments (id) {
+        id -> Text,
+        name -> Text,
+        domain -> Text,
+    }
+}

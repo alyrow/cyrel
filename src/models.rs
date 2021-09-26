@@ -18,3 +18,10 @@ pub struct NewUser<'a> {
     pub password: &'a str,
     pub groups: i32,
 }
+
+#[derive(Queryable)]
+pub struct Department {
+    pub id: String,
+    pub name: String,
+    pub domain: String,
+}

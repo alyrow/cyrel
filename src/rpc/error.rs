@@ -14,6 +14,9 @@ pub enum RpcError {
     #[error("the token was already used")]
     RegistrationTokenUsed = 4,
 
+    #[error("the department supplied is unknown")]
+    UnknownDepartment = 5,
+
     #[error("unimplemented")]
     Unimplemented = 2,
 }

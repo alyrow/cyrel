@@ -17,6 +17,7 @@ use crate::schedule::celcat::{fetch_calendar, GroupId};
 use crate::schedule::Course;
 use crate::SETTINGS;
 use crate::{models::User, schema::users};
+use crate::{models::Department, schema::departments};
 
 pub use self::error::RpcError;
 pub use self::rpc_impl_Rpc::gen_server;
@@ -101,6 +102,28 @@ impl Rpc for RpcImpl {
         department: String,
         email: String,
     ) -> jsonrpc_core::Result<String> {
+
+        let dpmt: Department = {
+            let db = server_error! {
+                self.db.lock()
+            };
+
+            match departments::dsl::departments
+                .filter(departments::dsl::id.eq(&department))
+                .first::<Department>(&*db)
+            {
+                Ok(dpmt) => dpmt,
+                Err(_) => {
+                    warn!("department {} is unknown", department);
+                    return Err(RpcError::UnknownDepartment.into());
+                },
+            }
+        };
+
+        let mut email = email;
+        email.push_str("@");
+        email.push_str(&*dpmt.domain);
+
         let user: User = {
             let db = server_error! {
                 self.db.lock()
