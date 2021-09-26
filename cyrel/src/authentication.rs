@@ -1,9 +1,10 @@
+use std::collections::HashMap;
+
 use jsonrpc_core::Metadata;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use pbkdf2::password_hash::{PasswordHasher, Salt};
 use pbkdf2::Pbkdf2;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use crate::models::User;
 
@@ -36,11 +37,15 @@ impl Claims {
             &DecodingKey::from_secret(secret.as_bytes()),
             &Validation::default(),
         )
-        .map(|j| Some(j.claims))
+            .map(|j| Some(j.claims))
     }
 
-    pub fn from_user(_user: &User) -> Self {
-        todo!()
+    pub fn from_user(user: &User) -> Self {
+        let time = chrono::offset::Utc::now() + chrono::Duration::days(14);
+        Claims {
+            sub: user.id.to_string(),
+            exp: time.timestamp() as usize,
+        }
     }
 
     pub fn to_jwt(&self, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
