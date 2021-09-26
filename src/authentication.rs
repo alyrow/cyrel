@@ -3,13 +3,13 @@ use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
 use crate::models::User;
-use chrono::Utc;
 use pbkdf2::password_hash::{PasswordHash, PasswordHasher, Salt};
 use pbkdf2::Pbkdf2;
 use std::collections::HashMap;
 use std::iter::Map;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH, Duration};
 use uuid::Uuid;
+use std::ops::Add;
 
 #[derive(Debug, Default, Clone)]
 pub struct Meta {
@@ -43,8 +43,16 @@ impl Claims {
         .map(|j| Some(j.claims))
     }
 
-    pub fn from_user(_user: &User) -> Self {
-        todo!()
+    pub fn from_user(user: &User) -> Self {
+        let time = SystemTime::now();
+        time.add(Duration::new(86400 * 14, 0));
+        let since_the_epoch = time
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards");
+        Claims {
+            sub: user.id.to_string(),
+            exp: since_the_epoch.as_millis() as usize
+        }
     }
 
     pub fn to_jwt(&self, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
