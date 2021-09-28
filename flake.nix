@@ -32,14 +32,10 @@
         ])) ++ (with pkgs; [
           pkg-config
           openssl
+          sqlx-cli
+          postgresql
           rust-nightly.rust-analyzer
           cargo-expand
-          sqlite
-          (diesel-cli.override {
-            sqliteSupport = true;
-            postgresqlSupport = false;
-            mysqlSupport = false;
-          })
         ]);
       };
     });

@@ -1,0 +1,10 @@
+[package]
+name = "cyrel-sync"
+version = "0.1.0"
+authors = ["Lucas Ransan <lucas@ransan.tk"]
+edition = "2018"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+cy-celcat = "0.1"
+sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "chrono", "json"] }
