@@ -338,6 +338,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "cy-celcat"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71792fa177872433df3c01a4aced34981473dc4806045994c94002ad5e1792e5"
+dependencies = [
+ "chrono",
+ "lazy_static",
+ "log",
+ "paste",
+ "regex",
+ "reqwest",
+ "serde 1.0.130",
+ "thiserror",
+]
+
+[[package]]
 name = "cyrel"
 version = "0.1.0"
 dependencies = [
@@ -345,7 +361,7 @@ dependencies = [
  "chrono",
  "clap",
  "config",
- "cy-celcat",
+ "cy-celcat 0.2.0",
  "dotenv",
  "env_logger",
  "futures",
@@ -375,7 +391,7 @@ name = "cyrel-sync"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "cy-celcat",
+ "cy-celcat 0.1.1",
  "sqlx",
 ]
 
