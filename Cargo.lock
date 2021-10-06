@@ -323,22 +323,6 @@ dependencies = [
 
 [[package]]
 name = "cy-celcat"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca0f1b6575ffc14b2557db897588927febc6d390e829fa6bfd1503752242d4af"
-dependencies = [
- "chrono",
- "lazy_static",
- "log",
- "paste",
- "regex",
- "reqwest",
- "serde 1.0.130",
- "thiserror",
-]
-
-[[package]]
-name = "cy-celcat"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71792fa177872433df3c01a4aced34981473dc4806045994c94002ad5e1792e5"
@@ -361,7 +345,7 @@ dependencies = [
  "chrono",
  "clap",
  "config",
- "cy-celcat 0.2.0",
+ "cy-celcat",
  "dotenv",
  "env_logger",
  "futures",
@@ -390,9 +374,13 @@ dependencies = [
 name = "cyrel-sync"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "chrono",
- "cy-celcat 0.1.1",
+ "cy-celcat",
+ "dotenv",
+ "futures",
  "sqlx",
+ "tokio",
 ]
 
 [[package]]
@@ -1667,6 +1655,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signal-hook-registry"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e51e73328dc4ac0c7ccbda3a494dfa03df1de2f46018127f60c693f2648455b0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "simple_asn1"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2022,9 +2019,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4efe6fc2395938c8155973d7be49fe8d03a843726e285e100a8a383cc0154ce"
+checksum = "c2c2416fdedca8443ae44b4527de1ea633af61d8f7169ffa6e72c5b53d24efcc"
 dependencies = [
  "autocfg",
  "bytes",
@@ -2032,8 +2029,23 @@ dependencies = [
  "memchr",
  "mio",
  "num_cpus",
+ "once_cell",
+ "parking_lot",
  "pin-project-lite",
+ "signal-hook-registry",
+ "tokio-macros",
  "winapi",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "154794c8f499c2619acd19e839294703e9e32e7630ef5f46ea80d4ef0fbee5eb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
