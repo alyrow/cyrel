@@ -14,11 +14,19 @@ async fn main() -> anyhow::Result<()> {
     let _ = dotenv();
 
     let pool = PgPool::connect(&env::var("DATABASE_URL")?).await?;
-    let mut celcat = Celcat::new("https://services-web.u-cergy.fr/calendar").await?;
-    celcat
-        .login(&env::var("CELCAT_USERNAME")?, &env::var("CELCAT_PASSWORD")?)
-        .await?;
+    let celcat = {
+        let mut c = Celcat::new("https://services-web.u-cergy.fr/calendar").await?;
+        c.login(&env::var("CELCAT_USERNAME")?, &env::var("CELCAT_PASSWORD")?)
+            .await?;
+        c
+    };
 
+    fetch_students(&pool, &celcat).await?;
+
+    Ok(())
+}
+
+async fn fetch_students(pool: &PgPool, celcat: &Celcat) -> anyhow::Result<()> {
     let students: ResourceList<Student> = celcat
         .fetch(ResourceListRequest {
             my_resources: false,
