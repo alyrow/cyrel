@@ -358,6 +358,7 @@ dependencies = [
  "log",
  "num-derive",
  "num-traits 0.2.14",
+ "once_cell",
  "pbkdf2",
  "rand",
  "regex",
@@ -367,6 +368,7 @@ dependencies = [
  "serde_repr",
  "sqlx",
  "thiserror",
+ "tokio",
  "void",
 ]
 

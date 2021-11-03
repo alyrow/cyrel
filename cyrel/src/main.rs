@@ -1,21 +1,14 @@
-#[macro_use]
-extern crate diesel;
-
 mod authentication;
-mod celcat;
+mod db;
 mod groups;
 mod models;
 mod rpc;
 mod schedule;
-mod schema;
 mod settings;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::sync::{Arc, Mutex};
 
 use clap::{clap_app, crate_authors, crate_description, crate_name, crate_version, ArgMatches};
-use diesel::prelude::*;
-use diesel::sqlite::SqliteConnection;
 use dotenv::dotenv;
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
@@ -41,7 +34,8 @@ lazy_static! {
     static ref SETTINGS: Settings = Settings::new(&CLI).expect("failed to read settings");
 }
 
-fn main() {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     dotenv().ok();
     env_logger::init();
 
@@ -50,15 +44,9 @@ fn main() {
 
     debug!("{:#?}", *SETTINGS);
 
-    let db_conn = SqliteConnection::establish(&SETTINGS.database.url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", SETTINGS.database.url));
-    info!("connected to the database");
-
     let mut io = MetaIoHandler::default();
-    let rpc = RpcImpl {
-        db: Arc::new(Mutex::new(db_conn)),
-        rng: StdRng::from_entropy(),
-    };
+
+    let rpc = RpcImpl::new(&SETTINGS.database.url, StdRng::from_entropy()).await;
 
     io.extend_with(rpc.to_delegate());
 
@@ -88,4 +76,6 @@ fn main() {
     info!("rpc started at {}", addr);
 
     server.wait();
+
+    Ok(())
 }
