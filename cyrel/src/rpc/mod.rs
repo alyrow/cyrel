@@ -1,6 +1,5 @@
 mod error;
 
-use crate::db::match_user;
 use chrono::NaiveDateTime;
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
@@ -12,6 +11,7 @@ use rand::prelude::StdRng;
 use sqlx::PgPool;
 
 use crate::authentication::{Claims, Meta};
+use crate::db::Db;
 use crate::models::User;
 use crate::schedule::celcat::fetch_calendar;
 use crate::schedule::Course;
@@ -94,10 +94,10 @@ impl Rpc for RpcImpl {
 
     fn login(&self, id: i64, password: String) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
-            let db = RpcImpl::get_postgres();
+            let pool = RpcImpl::get_postgres();
 
             let user: User = {
-                let result = match_user(&db, id).await;
+                let result = Db::match_user(&pool, id).await;
 
                 match result {
                     Ok(user) => user,
