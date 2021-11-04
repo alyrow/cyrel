@@ -55,14 +55,15 @@ async fn update_students(pool: &PgPool, celcat: &Celcat) -> anyhow::Result<()> {
         let (firstname, lastname) = separate_names(&s.text)?;
         sqlx::query!(
             r#"
-INSERT INTO celcat_students (id, firstname, lastname)
-VALUES ( $1, $2, $3 )
+INSERT INTO celcat_students (id, firstname, lastname, department)
+VALUES ( $1, $2, $3, $4 )
 ON CONFLICT (id) DO UPDATE
 SET (firstname, lastname) = (EXCLUDED.firstname, EXCLUDED.lastname)
             "#,
             s.id.0.parse::<i64>()?,
             firstname,
-            lastname
+            lastname,
+            s.dept
         )
         .execute(&mut tx)
         .await?;
