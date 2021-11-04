@@ -14,3 +14,9 @@ pub struct NewUser {
     pub password: String,
     pub groups: Vec<i32>,
 }
+
+pub struct Department {
+    pub id: String,
+    pub name: String,
+    pub domain: String,
+}

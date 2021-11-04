@@ -1,4 +1,4 @@
-use crate::models::User;
+use crate::models::{Department, User};
 use sqlx::PgPool;
 
 pub struct Db {}
@@ -22,6 +22,25 @@ WHERE id = $1
             lastname: user.lastname,
             email: user.email,
             password: user.password,
+        })
+    }
+
+    pub async fn match_department(pool: &PgPool, id: String) -> anyhow::Result<Department> {
+        let dep = sqlx::query!(
+        r#"
+SELECT id, name, domain
+FROM departments
+WHERE id = $1
+        "#,
+        id
+    )
+            .fetch_one(pool)
+            .await?;
+
+        Ok(Department {
+            id,
+            name: dep.name,
+            domain: dep.domain,
         })
     }
 }
