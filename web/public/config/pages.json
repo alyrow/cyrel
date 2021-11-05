@@ -1,21 +1,28 @@
 [
   {
     "name": "CYREL",
-    "url": "index.html",
+    "url": "/index.html",
     "topBar": true,
     "menu": true,
     "showInMenu": true
   },
   {
     "name": "Emploi du temps",
-    "url": "edt.html",
+    "url": "/edt.html",
     "topBar": true,
     "menu": true,
     "showInMenu": true
   },
   {
     "name": "Connexion",
-    "url": "login.html",
+    "url": "/login.html",
+    "topBar": true,
+    "menu": false,
+    "showInMenu": false
+  },
+  {
+    "name": "Inscription",
+    "url": "/register.html",
     "topBar": true,
     "menu": false,
     "showInMenu": false
