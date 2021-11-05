@@ -1,3 +1,27 @@
+use std::collections::HashMap;
+
+use chrono::NaiveDateTime;
+use jsonrpc_core::BoxFuture;
+use jsonrpc_derive::rpc;
+use jsonwebtoken::errors::Error;
+use log::{error, info, warn};
+use once_cell::sync::OnceCell;
+use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
+use pbkdf2::Pbkdf2;
+use rand::prelude::StdRng;
+use sqlx::PgPool;
+
+use crate::authentication::{CheckUser, Claims, HashFunction, Meta, Register};
+use crate::db::Db;
+use crate::email::Email;
+use crate::models::{Department, Identity, User};
+use crate::schedule::celcat::fetch_calendar;
+use crate::schedule::Course;
+use crate::SETTINGS;
+
+pub use self::error::RpcError;
+pub use self::rpc_impl_Rpc::gen_server;
+
 mod error;
 
 #[rpc(server)]
@@ -114,7 +138,7 @@ impl Rpc for RpcImpl {
             let pool = RpcImpl::get_postgres();
 
             let user: User = {
-                let result = Db::match_user(&pool, id).await;
+                let result = Db::match_user_by_id(&pool, id).await;
 
                 match result {
                     Ok(user) => user,
@@ -211,7 +235,7 @@ impl Rpc for RpcImpl {
             info!("{}", hash);
             let mut register = RpcImpl::get_tokens();
             register.put_user(hash.to_owned(), user);
-            let email_response = Email::send_verification_email(email.to_owned(), department, hash);
+            let email_response = Email::send_verification_email(email, department, hash);
             if !email_response.is_positive() {
                 warn!("{}", email_response.code().to_string());
                 return Err(RpcError::UnknownError.into());
@@ -284,12 +308,31 @@ impl Rpc for RpcImpl {
 
     fn schedule_get(
         &self,
-        _meta: Self::Metadata,
+        meta: Self::Metadata,
         start: NaiveDateTime,
         end: NaiveDateTime,
         group: i64,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
         Box::pin(async move {
+            let user: User = {
+                let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret) {
+                    Ok(claims) => claims,
+                    Err(err) => {
+                        warn!("{}", err.to_string());
+                        return Err(RpcError::IncorrectLoginInfo.into());
+                    }
+                };
+                let claims = claims.unwrap();
+                let sub = claims.sub.to_owned();
+                let check_result = CheckUser::jwt_check(RpcImpl::get_postgres(), sub).await;
+                match check_result {
+                    Ok(user) => user,
+                    Err(err) => {
+                        warn!("{}", err.to_string());
+                        return Err(RpcError::IncorrectLoginInfo.into());
+                    }
+                }
+            };
             fetch_calendar(start, end, group)
                 .await
                 .map_err(|err| jsonrpc_core::Error {

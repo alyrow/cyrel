@@ -2,11 +2,15 @@ use std::collections::HashMap;
 
 use jsonrpc_core::Metadata;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use log::{error, info, warn};
 use pbkdf2::password_hash::{PasswordHasher, Salt};
 use pbkdf2::Pbkdf2;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 
+use crate::db::Db;
 use crate::models::User;
+use crate::rpc::RpcError;
 
 #[derive(Debug, Default, Clone)]
 pub struct Meta {
@@ -54,6 +58,26 @@ impl Claims {
             self,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
+    }
+}
+
+pub struct CheckUser {}
+
+impl CheckUser {
+    pub async fn jwt_check(pool: &PgPool, sub: String) -> jsonrpc_core::Result<User> {
+        let user: User = {
+            let result = Db::match_user_by_id(&pool, sub.parse::<i64>().unwrap()).await;
+
+            match result
+            {
+                Ok(user) => user,
+                Err(_) => {
+                    warn!("unknown connected user {}", sub);
+                    return Err(RpcError::IncorrectLoginInfo.into());
+                },
+            }
+        };
+        Ok(user)
     }
 }
 
