@@ -9,10 +9,12 @@ use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
 use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 use sqlx::PgPool;
+use std::collections::HashMap;
 
-use crate::authentication::{Claims, Meta};
+use crate::authentication::{Claims, HashFunction, Meta, Register};
 use crate::db::Db;
-use crate::models::User;
+use crate::email::Email;
+use crate::models::{Department, Identity, User};
 use crate::schedule::celcat::fetch_calendar;
 use crate::schedule::Course;
 use crate::SETTINGS;
@@ -30,6 +32,26 @@ pub trait Rpc {
     #[rpc(name = "login", params = "named")]
     fn login(&self, id: i64, password: String) -> BoxFuture<jsonrpc_core::Result<String>>;
 
+    #[rpc(name = "register_1", params = "named")]
+    fn register_1(
+        &self,
+        ldap: i64,
+        department: String,
+        email: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>>;
+
+    #[rpc(name = "register_2", params = "named")]
+    fn register_2(&self, hash: String) -> BoxFuture<jsonrpc_core::Result<Identity>>;
+
+    #[rpc(name = "register_3", params = "named")]
+    fn register_3(
+        &self,
+        hash: String,
+        firstname: String,
+        lastname: String,
+        password: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>>;
+
     #[rpc(meta, name = "schedule_get", params = "named")]
     fn schedule_get(
         &self,
@@ -45,10 +67,12 @@ pub struct RpcImpl {
 }
 
 static POSTGRES: OnceCell<PgPool> = OnceCell::new();
+static mut TOKENS: OnceCell<Register> = OnceCell::new();
 
 impl RpcImpl {
     pub async fn new(url: &String, rng: StdRng) -> RpcImpl {
         RpcImpl::create_pg_pool(url).await;
+        RpcImpl::create_tokens().await;
         return RpcImpl { rng };
     }
 
@@ -64,6 +88,21 @@ impl RpcImpl {
     #[inline]
     pub fn get_postgres() -> &'static PgPool {
         unsafe { POSTGRES.get_unchecked() }
+    }
+
+    pub async fn create_tokens() {
+        unsafe {
+            TOKENS
+                .set(Register {
+                    tokens: HashMap::<String, User>::new(),
+                })
+                .expect("TOKENS global mut must set success")
+        }
+    }
+
+    #[inline]
+    pub fn get_tokens() -> &'static mut Register {
+        unsafe { TOKENS.get_mut().expect("Blblbl") }
     }
 }
 
@@ -120,6 +159,139 @@ impl Rpc for RpcImpl {
                 warn!("{} failed to log in", id);
                 Err(RpcError::IncorrectLoginInfo.into())
             }
+        })
+    }
+
+    fn register_1(
+        &self,
+        ldap: i64,
+        department: String,
+        email: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        Box::pin(async move {
+            let pool = RpcImpl::get_postgres();
+
+            let dpmt: Department = {
+                let result = Db::match_department(&pool, department.clone()).await;
+
+                match result {
+                    Ok(dpmt) => dpmt,
+                    Err(_) => {
+                        warn!("department {} is unknown", department);
+                        return Err(RpcError::UnknownDepartment.into());
+                    }
+                }
+            };
+
+            let mut email = email;
+            email.push_str("@");
+            email.push_str(&*dpmt.domain);
+
+            let mut user: User = {
+                let result = Db::match_user(&pool, ldap).await;
+
+                match result {
+                    Ok(_) => {
+                        warn!("user {} is already registered", ldap);
+                        return Err(RpcError::AlreadyRegistered.into());
+                    }
+                    Err(_) => User {
+                        id: ldap,
+                        firstname: "".to_string(),
+                        lastname: "".to_string(),
+                        email: email.to_owned(),
+                        password: "".to_string(),
+                    },
+                }
+            };
+
+            let validity: (String, String) = {
+                let result = Db::match_celcat_student(&pool, ldap, department.clone()).await;
+
+                match result {
+                    Ok(data) => data,
+                    Err(_) => {
+                        warn!("User {} in department: {} is unknown", ldap, department);
+                        return Err(RpcError::IncorrectLoginInfo.into());
+                    }
+                }
+            };
+
+            user.firstname = validity.0;
+            user.lastname = validity.1;
+
+            let hash = uuid::Uuid::new_v4().to_string();
+            info!("{}", hash);
+            let mut register = RpcImpl::get_tokens();
+            register.put_user(hash.to_owned(), user);
+            let email_response = Email::send_verification_email(email.to_owned(), department, hash);
+            if !email_response.is_positive() {
+                warn!("{}", email_response.code().to_string());
+                return Err(RpcError::UnknownError.into());
+            }
+
+            Ok("Code sent".to_string())
+        })
+    }
+
+    fn register_2(&self, hash: String) -> BoxFuture<jsonrpc_core::Result<Identity>> {
+        Box::pin(async move {
+            let mut register = RpcImpl::get_tokens();
+            if !register.tokens.contains_key(&*hash.to_owned()) {
+                warn!(
+                    "Someone tried to use an used or inexistant token: {}",
+                    hash.to_owned()
+                );
+                return Err(RpcError::RegistrationTokenUsed.into());
+            }
+            let user_saved = register.tokens.get(&hash).unwrap();
+            Ok(Identity {
+                firstname: user_saved.firstname.to_owned(),
+                lastname: user_saved.lastname.to_owned(),
+            })
+        })
+    }
+
+    fn register_3(
+        &self,
+        hash: String,
+        firstname: String,
+        lastname: String,
+        password: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        Box::pin(async move {
+            let mut register = RpcImpl::get_tokens();
+            if !register.tokens.contains_key(&*hash.to_owned()) {
+                warn!(
+                    "Someone tried to use an used or inexistant token: {}",
+                    hash.to_owned()
+                );
+                return Err(RpcError::RegistrationTokenUsed.into());
+            }
+            let user_saved = register.tokens.get(&hash).unwrap();
+            let id_str = user_saved.id.to_string();
+            let pass_hasher = HashFunction::hash_password(password.to_owned(), id_str.to_owned());
+            let user = User {
+                id: user_saved.id.to_owned(),
+                firstname,
+                lastname,
+                email: user_saved.email.to_owned(),
+                password: pass_hasher,
+            };
+            let pool = RpcImpl::get_postgres();
+
+            let validity: () = {
+                let result = Db::insert_user(&pool, user).await;
+                match result {
+                    Ok(data) => data,
+                    Err(err) => {
+                        warn!("{}", err.to_string());
+                        return Err(RpcError::Unimplemented.into());
+                    }
+                }
+            };
+            register.tokens.remove(&*hash);
+            Ok("Account created!".to_string())
         })
     }
 

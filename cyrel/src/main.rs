@@ -1,5 +1,6 @@
 mod authentication;
 mod db;
+mod email;
 mod groups;
 mod models;
 mod rpc;

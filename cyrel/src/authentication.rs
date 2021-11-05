@@ -1,6 +1,9 @@
 use jsonrpc_core::Metadata;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
+use pbkdf2::password_hash::{PasswordHasher, Salt};
+use pbkdf2::Pbkdf2;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use crate::models::User;
 
@@ -46,5 +49,28 @@ impl Claims {
             self,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
+    }
+}
+
+#[derive(std::fmt::Debug)]
+pub struct Register {
+    pub tokens: HashMap<String, User>,
+}
+
+impl Register {
+    pub fn put_user(&mut self, hash: String, user: User) -> () {
+        self.tokens.insert(hash, user);
+        ()
+    }
+}
+
+pub struct HashFunction {}
+
+impl HashFunction {
+    pub fn hash_password(password: String, salt: String) -> String {
+        Pbkdf2
+            .hash_password_simple(password.as_bytes(), &Salt::new(&*salt).unwrap())
+            .unwrap()
+            .to_string()
     }
 }

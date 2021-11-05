@@ -1,3 +1,6 @@
+use serde::Serialize;
+
+#[derive(Debug)]
 pub struct User {
     pub id: i64,
     pub firstname: String,
@@ -19,4 +22,10 @@ pub struct Department {
     pub id: String,
     pub name: String,
     pub domain: String,
+}
+
+#[derive(Serialize)]
+pub struct Identity {
+    pub firstname: String,
+    pub lastname: String,
 }
