@@ -32,14 +32,14 @@ class Api {
 
     /**
      * Function which logins a user
-     * @type {(username: string, password: string, onSuccess: function, onFailure: function) => void}
-     * @param username Username
+     * @type {(email: string, password: string, onSuccess: function, onFailure: function) => void}
+     * @param email Username
      * @param password Password
      * @param onSuccess When the server validates the login infos
      * @param onFailure When the server rejects login infos
      */
-    login(username, password, onSuccess, onFailure) {
-        this.#rpc.call("login", {username: username, password: password})
+    login(email, password, onSuccess, onFailure) {
+        this.#rpc.call("login", {email: email, password: password})
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }

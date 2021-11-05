@@ -1,12 +1,16 @@
 $('.ui.form')
     .form({
         fields: {
-            username: {
-                identifier: 'username',
+            email: {
+                identifier: 'email',
                 rules: [
                     {
                         type: 'empty',
-                        prompt: 'Merci de renseigner votre nom d\'utilisateur'
+                        prompt: 'Merci de renseigner votre addresse mail'
+                    },
+                    {
+                        type   : 'email',
+                        prompt : 'Merci de renseigner une addresse mail valide'
                     }
                 ]
             },
@@ -33,7 +37,7 @@ document.getElementById("login").onclick = () => {
     jquerySelector.form("validate form");
     if (jquerySelector.form("is valid")) {
         elem.classList.add("loading");
-        Api.backend.login(jquerySelector.form("get values").username, jquerySelector.form("get values").password, success => {
+        Api.backend.login(jquerySelector.form("get values").email, jquerySelector.form("get values").password, success => {
             elem.classList.remove("loading");
             elem.classList.add("success");
         }, failure => {
