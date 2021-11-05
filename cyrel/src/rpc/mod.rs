@@ -32,7 +32,7 @@ pub trait Rpc {
     fn ping(&self) -> jsonrpc_core::Result<String>;
 
     #[rpc(name = "login", params = "named")]
-    fn login(&self, id: i64, password: String) -> BoxFuture<jsonrpc_core::Result<String>>;
+    fn login(&self, email: String, password: String) -> BoxFuture<jsonrpc_core::Result<String>>;
 
     #[rpc(name = "register_1", params = "named")]
     fn register_1(
@@ -133,17 +133,17 @@ impl Rpc for RpcImpl {
         Ok("pong".to_owned())
     }
 
-    fn login(&self, id: i64, password: String) -> BoxFuture<jsonrpc_core::Result<String>> {
+    fn login(&self, email: String, password: String) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
             let pool = RpcImpl::get_postgres();
 
             let user: User = {
-                let result = Db::match_user_by_id(&pool, id).await;
+                let result = Db::match_user_by_email(&pool, email.to_owned()).await;
 
                 match result {
                     Ok(user) => user,
                     Err(_) => {
-                        warn!("{} isn't a know id", id);
+                        warn!("{} isn't a know email", email);
                         return Err(RpcError::IncorrectLoginInfo.into());
                     }
                 }
@@ -155,10 +155,10 @@ impl Rpc for RpcImpl {
                 let jwt = server_error! {
                     Claims::from_user(&user).to_jwt(&SETTINGS.jwt.secret)
                 };
-                info!("{} logged in", id);
+                info!("{} logged in", user.id);
                 Ok(jwt)
             } else {
-                warn!("{} failed to log in", id);
+                warn!("{} failed to log in", user.id);
                 Err(RpcError::IncorrectLoginInfo.into())
             }
         })
