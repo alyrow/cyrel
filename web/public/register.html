@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Inscription</title>
+    <link rel="manifest" href="manifest.json">
+
+    <script src="dependencies/json-rpc.min.js"></script>
+    <script src="js/api.js"></script>
+
+    <script src="dependencies/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="dependencies/semantic/dist/semantic.min.css">
+    <script src="dependencies/semantic/dist/semantic.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="js/ui/ui-core.js"></script>
+    <script src="js/ui/template.js"></script>
+    <script src="js/config.js"></script>
+</head>
+<body style="height: 100%">
+<div class="ui segment regular-box" style="top: 18%;">
+    <h1 class="ui header">
+        <img class="ui image" src="images/logos/cyrel_long-512.png" style="height: 6vh; width: auto" alt="logo">
+    </h1>
+</div>
+<div class="ui segment regular-box" style="top: 20%;">
+    <h2>Inscription</h2>
+    <p>Pour débuter l'inscription merci de vous munir de votre numéro étudiant ainsi que de votre email scolaire.</p>
+</div>
+<div class="ui segment regular-box" style="top: 22%;">
+    <form id="register_1" class="ui form">
+        <div class="field">
+            <label>Numéro étudiant</label>
+            <input type="number" name="id" placeholder="Numéro étudiant">
+        </div>
+        <div class="field">
+            <label>Département</label>
+            <div class="ui selection dropdown">
+                <input type="hidden" name="department">
+                <i class="dropdown icon"></i>
+                <div class="default text"></div>
+                <div class="menu">
+                    <register-select></register-select>
+                </div>
+            </div>
+        </div>
+        <div class="field">
+            <label>Email</label>
+            <div class="ui labeled input">
+            <input type="text" name="email" placeholder="Email">
+            <div id="email-label" class="ui label">@</div>
+            </div>
+        </div>
+        <div id="check" class="ui primary button">Continuer</div>
+        <div class="ui error message"></div>
+    </form>
+</div>
+<div id="check-code" class="ui segment regular-box" style="top: 24%; display: none;">
+    <p>Merci d'entrer votre code de vérification.</p>
+    <form id="form-check" class="ui form">
+        <div class="field">
+            <label>Code de vérification</label>
+            <input type="text" name="code" placeholder="Code de vérification">
+        </div>
+        <div id="continue" class="ui primary button">Continuer</div>
+        <div class="ui error message"></div>
+    </form>
+</div>
+<div id="end" class="ui segment regular-box" style="top: 26%; display: none;">
+    <p>Merci d'entrer votre code de vérification.</p>
+    <form id="register_2" class="ui form">
+        <div class="two fields">
+            <div class="field">
+                <label>Prénom</label>
+                <input type="text" name="firstname" placeholder="Prénom">
+            </div>
+            <div class="field">
+                <label>Nom</label>
+                <input type="text" name="lastname" placeholder="Nom">
+            </div>
+        </div>
+        <div class="field">
+            <label>Mot de passe</label>
+            <input type="password" name="password" placeholder="Mot de passe">
+        </div>
+        <div class="field">
+            <label>Confirmation du mot de passe</label>
+            <input type="password" name="password2" placeholder="Confirmation du mot de passe">
+        </div>
+        <div class="ui success message">
+            <div class="header">Inscris</div>
+            <p>Vous êtes maintenant inscris !</p>
+        </div>
+        <div id="register" class="ui primary button">S'inscrire</div>
+        <div class="ui error message"></div>
+    </form>
+</div>
+<script defer src="js/ui/register.js"></script>
+</body>
+</html>

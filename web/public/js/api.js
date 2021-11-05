@@ -31,15 +31,59 @@ class Api {
     }
 
     /**
-     * Function which login a user
+     * Function which logins a user
      * @type {(username: string, password: string, onSuccess: function, onFailure: function) => void}
      * @param username Username
      * @param password Password
-     * @param onSuccess When the server validate the login infos
-     * @param onFailure When the server reject login infos
+     * @param onSuccess When the server validates the login infos
+     * @param onFailure When the server rejects login infos
      */
     login(username, password, onSuccess, onFailure) {
         this.#rpc.call("login", {username: username, password: password})
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
+
+    /**
+     * Function which asks the server if the user is eligible to registration
+     * @type {(ldap: number, department: string, email: string, onSuccess: function, onFailure: function) => void}
+     * @param ldap Ldap id
+     * @param department Department id
+     * @param email User email without 'at' and domain part
+     * @param onSuccess When the server validates the user
+     * @param onFailure When the server rejects the user
+     */
+    register_1(ldap, department, email, onSuccess, onFailure) {
+        this.#rpc.call("register_1", {ldap: ldap, department: department, email: email})
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
+
+    /**
+     * Function which checks if user is human
+     * @type {(hash: string, onSuccess: function, onFailure: function) => void}
+     * @param hash Verification code
+     * @param onSuccess Call a function with user identity
+     * @param onFailure Check fail
+     */
+    register_2(hash, onSuccess, onFailure) {
+        this.#rpc.call("register_2", {hash: hash})
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
+
+    /**
+     * Function which registers the user
+     * @type {(hash: string, firstname: string, lastname: string, password: string, onSuccess: function, onFailure: function) => void}
+     * @param hash Verification code
+     * @param firstname Firstname
+     * @param lastname Lastname
+     * @param password Password
+     * @param onSuccess User registered
+     * @param onFailure Failed to register user
+     */
+    register_3(hash, firstname, lastname, password, onSuccess, onFailure) {
+        this.#rpc.call("register_3", {hash: hash, firstname: firstname, lastname: lastname, password: password})
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
