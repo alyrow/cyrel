@@ -1,27 +1,5 @@
 mod error;
 
-use chrono::NaiveDateTime;
-use jsonrpc_core::BoxFuture;
-use jsonrpc_derive::rpc;
-use log::{error, info, warn};
-use once_cell::sync::OnceCell;
-use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
-use pbkdf2::Pbkdf2;
-use rand::prelude::StdRng;
-use sqlx::PgPool;
-use std::collections::HashMap;
-
-use crate::authentication::{Claims, HashFunction, Meta, Register};
-use crate::db::Db;
-use crate::email::Email;
-use crate::models::{Department, Identity, User};
-use crate::schedule::celcat::fetch_calendar;
-use crate::schedule::Course;
-use crate::SETTINGS;
-
-pub use self::error::RpcError;
-pub use self::rpc_impl_Rpc::gen_server;
-
 #[rpc(server)]
 pub trait Rpc {
     type Metadata;
@@ -188,7 +166,7 @@ impl Rpc for RpcImpl {
             email.push_str(&*dpmt.domain);
 
             let mut user: User = {
-                let result = Db::match_user(&pool, ldap).await;
+                let result = Db::match_user_by_id(&pool, ldap).await;
 
                 match result {
                     Ok(_) => {
@@ -204,6 +182,15 @@ impl Rpc for RpcImpl {
                     },
                 }
             };
+
+            let result = Db::match_user_by_email(&pool, email.to_owned()).await;
+            match result {
+                Ok(u) => {
+                    warn!("email {} is already used for user {}", email, u.id);
+                    return Err(RpcError::AlreadyRegistered.into());
+                }
+                Err(_) => {}
+            }
 
             let validity: (String, String) = {
                 let result = Db::match_celcat_student(&pool, ldap, department.clone()).await;

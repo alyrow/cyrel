@@ -1,10 +1,11 @@
-use crate::models::{Department, User};
 use sqlx::PgPool;
+
+use crate::models::{Department, User};
 
 pub struct Db {}
 
 impl Db {
-    pub async fn match_user(pool: &PgPool, id: i64) -> anyhow::Result<User> {
+    pub async fn match_user_by_id(pool: &PgPool, id: i64) -> anyhow::Result<User> {
         let user = sqlx::query!(
             r#"
 SELECT id, firstname, lastname, email, password
@@ -13,11 +14,32 @@ WHERE id = $1
         "#,
             id
         )
-        .fetch_one(pool)
-        .await?;
+            .fetch_one(pool)
+            .await?;
 
         Ok(User {
             id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            password: user.password,
+        })
+    }
+
+    pub async fn match_user_by_email(pool: &PgPool, email: String) -> anyhow::Result<User> {
+        let user = sqlx::query!(
+            r#"
+SELECT id, firstname, lastname, email, password
+FROM users
+WHERE email = $1
+        "#,
+            email
+        )
+            .fetch_one(pool)
+            .await?;
+
+        Ok(User {
+            id: user.id,
             firstname: user.firstname,
             lastname: user.lastname,
             email: user.email,
