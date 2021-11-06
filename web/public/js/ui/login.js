@@ -38,8 +38,14 @@ document.getElementById("login").onclick = () => {
     if (jquerySelector.form("is valid")) {
         elem.classList.add("loading");
         Api.backend.login(jquerySelector.form("get values").email, jquerySelector.form("get values").password, success => {
-            elem.classList.remove("loading");
-            elem.classList.add("success");
+            Api.backend.getMyGroups(myGroups => {
+                elem.classList.remove("loading");
+                elem.classList.add("success");
+                if (myGroups.length === 0) document.location.href = "/groups.html";
+            }, e => {
+                elem.classList.remove("loading");
+                elem.classList.add("success");
+            });
         }, failure => {
             elem.classList.remove("loading");
             elem.classList.add("error");

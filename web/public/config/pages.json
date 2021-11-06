@@ -26,5 +26,12 @@
     "topBar": true,
     "menu": false,
     "showInMenu": false
+  },
+  {
+    "name": "Paramètres - Groupes",
+    "url": "/groups.html",
+    "topBar": true,
+    "menu": false,
+    "showInMenu": false
   }
 ]

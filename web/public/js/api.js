@@ -40,7 +40,10 @@ class Api {
      */
     login(email, password, onSuccess, onFailure) {
         this.#rpc.call("login", {email: email, password: password})
-            .then(res => onSuccess(res))
+            .then(res => {
+                window.localStorage.setItem("__", res); //FIXME Big vulnerability
+                onSuccess();
+            })
             .catch(err => onFailure(err));
     }
 
@@ -98,7 +101,44 @@ class Api {
      * @param onFailure When an error occur
      */
     getSchedule(start, end, group, onSuccess, onFailure) {
-        this.#rpc.call("schedule_get", {start: start, end: end, group: group})
+        this.#rpc.call("schedule_get", {start: start, end: end, group: group}, window.localStorage.getItem("__"))
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
+
+    /**
+     * Get all available groups
+     * @type {(onSuccess: function, onFailure: function) => void}
+     * @param onSuccess Give groups
+     * @param onFailure When an error occur
+     */
+    getAllGroups(onSuccess, onFailure) {
+        this.#rpc.call("all_groups_get", {}, window.localStorage.getItem("__"))
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
+
+    /**
+     * Get groups of the user
+     * @type {(onSuccess: function, onFailure: function) => void}
+     * @param onSuccess Give groups
+     * @param onFailure When an error occur
+     */
+    getMyGroups(onSuccess, onFailure) {
+        this.#rpc.call("my_groups_get", {}, window.localStorage.getItem("__"))
+            .then(res => onSuccess(res))
+            .catch(err => onFailure(err));
+    }
+
+    /**
+     * Join public groups
+     * @type {(groups: number[], onSuccess: function, onFailure: function) => void}
+     * @param groups Array of groups to join
+     * @param onSuccess All groups joined successfully
+     * @param onFailure When an error occur
+     */
+    joinGroups(groups, onSuccess, onFailure) {
+        this.#rpc.call("groups_join", {groups: groups}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
