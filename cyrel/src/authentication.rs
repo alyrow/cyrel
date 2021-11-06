@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use jsonrpc_core::Metadata;
+use jsonrpc_http_server::Rpc;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use log::{error, info, warn};
 use pbkdf2::password_hash::{PasswordHasher, Salt};
@@ -10,7 +11,8 @@ use sqlx::PgPool;
 
 use crate::db::Db;
 use crate::models::User;
-use crate::rpc::RpcError;
+use crate::rpc::{RpcError, RpcImpl};
+use crate::SETTINGS;
 
 #[derive(Debug, Default, Clone)]
 pub struct Meta {
@@ -78,6 +80,29 @@ impl CheckUser {
             }
         };
         Ok(user)
+    }
+
+    pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> Option<User> {
+        let user = {
+            let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret) {
+                Ok(claims) => claims,
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    return None
+                }
+            };
+            let claims = claims.unwrap();
+            let sub = claims.sub.to_owned();
+            let check_result = CheckUser::jwt_check(RpcImpl::get_postgres(), sub).await;
+            match check_result {
+                Ok(user) => user,
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    return None;
+                }
+            }
+        };
+        Some(user)
     }
 }
 

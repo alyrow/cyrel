@@ -1,6 +1,8 @@
+use log::{error, info, warn};
 use sqlx::PgPool;
 
-use crate::models::{Department, User};
+use crate::models::{Department, Group, User};
+use crate::rpc::RpcError;
 
 pub struct Db {}
 
@@ -99,10 +101,145 @@ VALUES ($1, $2, $3, $4, $5)
             user.email,
             user.password
         )
-        .execute(&mut tx)
-        .await?;
+            .execute(&mut tx)
+            .await?;
         tx.commit().await?;
 
         Ok(())
+    }
+
+    pub async fn match_group(pool: &PgPool, group: i32) -> anyhow::Result<Group> {
+        let grp = sqlx::query!(
+            r#"
+SELECT id, name, referent, parent, private
+FROM groups
+WHERE id = $1
+        "#,
+            group
+        )
+            .fetch_one(pool)
+            .await?;
+
+        Ok(Group {
+            id: grp.id,
+            name: grp.name,
+            referent: grp.referent,
+            parent: grp.parent,
+            private: grp.private,
+        })
+    }
+
+    pub async fn is_user_in_group(pool: &PgPool, user_id: i64, group_id: i32) -> anyhow::Result<()> {
+        let grp = sqlx::query!(
+            r#"
+SELECT user_id, group_id
+FROM users_groups
+WHERE user_id = $1 AND group_id = $2
+        "#,
+            user_id,
+            group_id
+        )
+            .fetch_one(pool)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn insert_user_in_group(pool: &PgPool, user_id: i64, group_id: i32) -> anyhow::Result<()> {
+        let user: User = {
+            let result = Db::match_user_by_id(pool, user_id).await;
+            match result {
+                Ok(user) => user,
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    return Err(RpcError::Unimplemented.into());
+                }
+            }
+        };
+        let group: Group = {
+            let result = Db::match_group(pool, group_id).await;
+            match result {
+                Ok(grp) => grp,
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    return Err(RpcError::Unimplemented.into());
+                }
+            }
+        };
+        if group.private {
+            return Err(RpcError::Unimplemented.into());
+        }
+        let result = Db::is_user_in_group(pool, user.id, group.id).await;
+        match result {
+            Ok(_) => {
+                warn!("user {} is already in group {} ({})", user.id, group.id, group.name);
+                return Err(RpcError::Unimplemented.into());
+            },
+            Err(_) => {}
+        }
+
+        let mut tx = pool.begin().await?;
+        let group_add = sqlx::query!(
+            r#"
+INSERT INTO users_groups (user_id, group_id)
+VALUES ($1, $2)
+        "#,
+            user.id,
+            group.id
+        )
+            .execute(&mut tx)
+            .await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    pub async fn get_user_groups(pool: &PgPool, user_id: i64) -> anyhow::Result<Vec<Group>> {
+        let grps = sqlx::query!(
+            r#"
+SELECT user_id, group_id
+FROM users_groups
+WHERE user_id = $1
+        "#,
+            user_id
+        )
+            .fetch_all(pool)
+            .await?;
+
+        let mut groups = Vec::<Group>::new();
+
+        for grp in grps {
+            let group = Db::match_group(pool, grp.group_id).await?;
+            groups.push(group)
+        }
+
+        Ok(groups)
+    }
+
+    pub async fn get_all_groups(pool: &PgPool, user_id: i64) -> anyhow::Result<Vec<Group>> {
+        let grps = sqlx::query!(
+            r#"
+SELECT id, name, referent, parent, private
+FROM groups
+WHERE private = false
+        "#
+        )
+            .fetch_all(pool)
+            .await?;
+
+        let mut groups = Vec::<Group>::new();
+
+        for grp in grps {
+            let group = Group {
+                id: grp.id,
+                name: grp.name,
+                referent: grp.referent,
+                parent: grp.parent,
+                private: grp.private,
+            };
+            groups.push(group)
+        }
+
+        Ok(groups)
     }
 }

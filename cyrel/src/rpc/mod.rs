@@ -14,7 +14,7 @@ use sqlx::PgPool;
 use crate::authentication::{CheckUser, Claims, HashFunction, Meta, Register};
 use crate::db::Db;
 use crate::email::Email;
-use crate::models::{Department, Identity, User};
+use crate::models::{Department, Group, Identity, User};
 use crate::schedule::celcat::fetch_calendar;
 use crate::schedule::Course;
 use crate::SETTINGS;
@@ -52,6 +52,25 @@ pub trait Rpc {
         firstname: String,
         lastname: String,
         password: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>>;
+
+    #[rpc(meta, name = "my_groups_get", params = "named")]
+    fn my_groups_get(
+        &self,
+        meta: Self::Metadata,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
+
+    #[rpc(meta, name = "all_groups_get", params = "named")]
+    fn all_groups_get(
+        &self,
+        meta: Self::Metadata,
+    ) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
+
+    #[rpc(meta, name = "groups_join", params = "named")]
+    fn groups_join(
+        &self,
+        meta: Self::Metadata,
+        groups: Vec<i32>,
     ) -> BoxFuture<jsonrpc_core::Result<String>>;
 
     #[rpc(meta, name = "schedule_get", params = "named")]
@@ -306,6 +325,70 @@ impl Rpc for RpcImpl {
         })
     }
 
+    fn my_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
+        Box::pin(async move {
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            if user.is_none() {
+                return Err(RpcError::IncorrectLoginInfo.into())
+            }
+            let user = user.unwrap();
+            let result = Db::get_user_groups(RpcImpl::get_postgres(), user.id).await;
+            match result {
+                Ok(groups) => Ok(groups),
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    Err(RpcError::Unimplemented.into())
+                }
+            }
+        })
+    }
+
+    fn all_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
+        Box::pin(async move {
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            if user.is_none() {
+                return Err(RpcError::IncorrectLoginInfo.into())
+            }
+            let user = user.unwrap();
+            let result = Db::get_all_groups(RpcImpl::get_postgres(), user.id).await;
+            match result {
+                Ok(groups) => Ok(groups),
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    Err(RpcError::Unimplemented.into())
+                }
+            }
+        })
+    }
+
+    fn groups_join(&self, meta: Self::Metadata, groups: Vec<i32>) -> BoxFuture<jsonrpc_core::Result<String>> {
+        Box::pin(async move {
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            if user.is_none() {
+                return Err(RpcError::IncorrectLoginInfo.into())
+            }
+            let user = user.unwrap();
+
+            let mut failure = Vec::<i32>::new();
+            for group in groups {
+                let result = Db::insert_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
+                match result {
+                    Ok(_) => {},
+                    Err(_) => {
+                        warn!("Failed to add user {} in group {}", user.id, group);
+                        failure.push(group);
+                    }
+                }
+            }
+
+            return if failure.len() == 0 {
+                Ok("Success!".parse().unwrap())
+            } else {
+                Err(RpcError::Unimplemented.into())
+            }
+        })
+    }
+
     fn schedule_get(
         &self,
         meta: Self::Metadata,
@@ -314,25 +397,11 @@ impl Rpc for RpcImpl {
         group: i64,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
         Box::pin(async move {
-            let user: User = {
-                let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret) {
-                    Ok(claims) => claims,
-                    Err(err) => {
-                        warn!("{}", err.to_string());
-                        return Err(RpcError::IncorrectLoginInfo.into());
-                    }
-                };
-                let claims = claims.unwrap();
-                let sub = claims.sub.to_owned();
-                let check_result = CheckUser::jwt_check(RpcImpl::get_postgres(), sub).await;
-                match check_result {
-                    Ok(user) => user,
-                    Err(err) => {
-                        warn!("{}", err.to_string());
-                        return Err(RpcError::IncorrectLoginInfo.into());
-                    }
-                }
-            };
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            if user.is_none() {
+                return Err(RpcError::IncorrectLoginInfo.into())
+            }
+            let user = user.unwrap();
             fetch_calendar(start, end, group)
                 .await
                 .map_err(|err| jsonrpc_core::Error {

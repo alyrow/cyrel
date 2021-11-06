@@ -29,3 +29,12 @@ pub struct Identity {
     pub firstname: String,
     pub lastname: String,
 }
+
+#[derive(Serialize)]
+pub struct Group {
+    pub id: i32,
+    pub name: String,
+    pub referent: Option<i64>,
+    pub parent: Option<i32>,
+    pub private: bool,
+}
