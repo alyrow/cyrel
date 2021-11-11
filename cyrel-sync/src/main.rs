@@ -5,7 +5,7 @@ use celcat::{
     entities::{Student, StudentId},
     fetch::Celcat,
     fetchable::{
-        calendar::{CalView, CalendarData, CalendarDataRequest, Course},
+        calendar::{CalendarData, CalendarDataRequest, CalView, Course},
         event::{RawSideBarEventElement, SideBarEvent, SideBarEventElement, SideBarEventRequest},
         resources::{ResourceList, ResourceListRequest},
     },
@@ -29,12 +29,12 @@ async fn main() -> anyhow::Result<()> {
 
     update_students(&pool, &celcat).await?;
 
-    let gr = get_group_referents(&pool).await?;
+    /*let gr = get_group_referents(&pool).await?;
     try_join_all(
         gr.into_iter()
             .map(|(g, r)| update_courses(&pool, &celcat, g, r)),
     )
-    .await?;
+    .await?;*/
 
     Ok(())
 }
