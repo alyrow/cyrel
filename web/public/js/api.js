@@ -103,7 +103,11 @@ class Api {
     getSchedule(start, end, group, onSuccess, onFailure) {
         this.#rpc.call("schedule_get", {start: start, end: end, group: group}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
-            .catch(err => onFailure(err));
+            .catch(err => {
+                onFailure(err);
+                if (err.code === Config.getConfig("errors").IncorrectLoginInfo.code)
+                    document.location.href = "/login.html";
+            });
     }
 
     /**
@@ -115,7 +119,11 @@ class Api {
     getAllGroups(onSuccess, onFailure) {
         this.#rpc.call("all_groups_get", {}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
-            .catch(err => onFailure(err));
+            .catch(err => {
+                onFailure(err);
+                if (err.code === Config.getConfig("errors").IncorrectLoginInfo.code)
+                    document.location.href = "/login.html";
+            });
     }
 
     /**
@@ -127,7 +135,11 @@ class Api {
     getMyGroups(onSuccess, onFailure) {
         this.#rpc.call("my_groups_get", {}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
-            .catch(err => onFailure(err));
+            .catch(err => {
+                onFailure(err);
+                if (err.code === Config.getConfig("errors").IncorrectLoginInfo.code)
+                    document.location.href = "/login.html";
+            });
     }
 
     /**
@@ -140,6 +152,10 @@ class Api {
     joinGroups(groups, onSuccess, onFailure) {
         this.#rpc.call("groups_join", {groups: groups}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
-            .catch(err => onFailure(err));
+            .catch(err => {
+                onFailure(err);
+                if (err.code === Config.getConfig("errors").IncorrectLoginInfo.code)
+                    document.location.href = "/login.html";
+            });
     }
 }

@@ -43,3 +43,5 @@ class Config {
         else callback(this.configs[name]);
     }
 }
+
+Config.loadConfig("errors", () => {});

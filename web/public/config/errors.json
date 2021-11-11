@@ -1,0 +1,26 @@
+{
+  "UnknownError": {
+    "code": 0,
+    "message": "unknown error"
+  },
+  "IncorrectLoginInfo": {
+    "code": 1,
+    "message": "incorrect login information"
+  },
+  "Unimplemented": {
+    "code": 2,
+    "message": "unimplemented"
+  },
+  "AlreadyRegistered": {
+    "code": 3,
+    "message": "already registered"
+  },
+  "RegistrationTokenUsed": {
+    "code": 4,
+    "message": "the token was already used"
+  },
+  "UnknownDepartment": {
+    "code": 5,
+    "message": "the department supplied is unknown"
+  }
+}
