@@ -157,6 +157,7 @@ document.getElementById("register").onclick = () => {
         Api.backend.register_3($('#form-check').form("get values").code, jquerySelector.form("get values").firstname, jquerySelector.form("get values").lastname, jquerySelector.form("get values").password, success => {
             elem.classList.remove("loading");
             elem.classList.add("success");
+            document.location.href = "/login.html";
         }, failure => {
             elem.classList.remove("loading");
             jquerySelector.form("add errors", [failure.message]);

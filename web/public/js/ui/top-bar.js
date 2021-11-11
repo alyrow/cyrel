@@ -17,7 +17,8 @@ class TopBar {
         new Template("top-bar", {
             "page_title": title,
             "pages": pagesConf,
-            "menu": thisPage && thisPage.menu
+            "menu": thisPage && thisPage.menu,
+            "logged": localStorage.getItem("__") !== null && localStorage.getItem("__") !== ""
         }, element, () => {
             if (thisPage && thisPage.menu) {
                 $('.ui.left.vertical.menu.sidebar').first()
@@ -26,6 +27,11 @@ class TopBar {
                 ;
             }
         });
+    }
+
+    static logout() {
+        localStorage.removeItem("__");
+        document.location.href = "/login.html";
     }
 }
 

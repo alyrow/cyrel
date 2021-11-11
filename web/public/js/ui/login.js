@@ -42,9 +42,11 @@ document.getElementById("login").onclick = () => {
                 elem.classList.remove("loading");
                 elem.classList.add("success");
                 if (myGroups.length === 0) document.location.href = "/groups.html";
+                else document.location.href = "/index.html";
             }, e => {
                 elem.classList.remove("loading");
                 elem.classList.add("success");
+                document.location.href = "/index.html";
             });
         }, failure => {
             elem.classList.remove("loading");

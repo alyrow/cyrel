@@ -10,5 +10,11 @@
             <i if="menu" class="sidebar icon"></i>
         </div>
         <div class="item">{{page_title}}</div>
+
+        <div if="logged" class="right menu">
+            <a class="ui item" onclick="TopBar.logout()">
+                Déconnexion
+            </a>
+        </div>
     </div>
 </div>
