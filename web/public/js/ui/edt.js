@@ -39,7 +39,8 @@ class Edt {
             const end = new Date(course.end);
             const name = course.module? course.module: (course.description? course.description: (course.category? course.category: ""));
             const teacher = course.teacher? course.teacher: "";
-            this.#drawCourse(this.svg, name, this.svg._days[start.getDay() - 1], start, end, teacher, this.#colorEvent(course.category, this.svg._theme));
+            const location = course.room? course.room: "";
+            this.#drawCourse(this.svg, name, this.svg._days[start.getDay() - 1], start, end, teacher, location, this.#colorEvent(course.category, this.svg._theme));
         });
     }
 
@@ -126,22 +127,25 @@ class Edt {
 
     /**
      * Add event to a schedule
-     * @type {(draw: any, name: string, day: string, start: Date, end: Date, teacher: string, color: string) => void}
+     * @type {(draw: any, name: string, day: string, start: Date, end: Date, teacher: string, location: string, color: string) => void}
      * @param draw The schedule {@link drawTable}
      * @param name Name of the event
      * @param day Day of the event
      * @param start Start date of the event
      * @param end End date of the event
      * @param teacher Teacher
+     * @param location Room of the course
      * @param color Color of the event
      */
-    #drawCourse(draw, name, day, start, end, teacher, color) {
+    #drawCourse(draw, name, day, start, end, teacher, location, color) {
         let x1, x2;
         let i = draw._days.findIndex((element) => element === day);
         x1 = draw._margin + 3.5 * 16 + draw._dayLength * (i);
         x2 = draw._margin + 3.5 * 16 + draw._dayLength * (i + 1) - 1;
         let timeStart = (start.getHours() - 8) * 2 + start.getMinutes() / 30;
-        let timeEnd = (end.getHours() - 8) * 2 + end.getMinutes() / 30;
+        let timeEnd;
+        if (start.getTime() > end.getTime()) timeEnd = timeStart * 2;
+        else timeEnd = (end.getHours() - 8) * 2 + end.getMinutes() / 30;
         let y1 = timeStart * draw._spacing + draw._margin + draw._dayHeight;
         let y2 = timeEnd * draw._spacing + draw._margin + draw._dayHeight;
         //i * spacing + margin + dayHeight
@@ -163,7 +167,7 @@ class Edt {
             color: color
         });
 
-        draw.text(start.getHours() + "h" + start.getMinutes() + (start.getMinutes() === 0 ? "0" : "")).move(x1 + 3, y1 + 3).font("size", 13);
+        draw.text(start.getHours() + "h" + (start.getMinutes() < 10 ? "0" : "") + start.getMinutes()).move(x1 + 3, y1 + 3).font("size", 13);
         let mat = draw.text(name).move(x1 + 6 * 7, y1 + 3).font("size", 14).font("weight", 1);
 
         do {
@@ -176,8 +180,23 @@ class Edt {
             }
         } while (mat.length() >= (x2 - (x1 + 6 * 7)));
         if (timeEnd - timeStart > 1) {
-            draw.text(end.getHours() + "h" + end.getMinutes() + (end.getMinutes() === 0 ? "0" : "")).move(x1 + 3, y2 + 3 - 16).font("size", 13);
+            draw.text(end.getHours() + "h" + (end.getMinutes() < 10 ? "0" : "") + end.getMinutes()).move(x1 + 3, y2 + 3 - 16).font("size", 13);
             draw.text((teacher != null) ? teacher.split(", ").join("\n") : "").move(x1 + 3, y1 + 4 + 16).font("size", 14).fill("#00db6b");
+            if (location !== null && location !== "") {
+                const location_array = location.split(", ");
+                const an_array = [];
+                for (let i = 0; i < location_array.length; i++) {
+                    an_array.push(location_array[i].split(" ")[1])
+                }
+                draw.text(an_array.join(", ")).move(x1 + 3, y1 + 4 + 16 + teacher.split(", ").length * 16).font("size", 14).fill("#b06400");
+            }
+        } else if (location !== null && location !== "") {
+            const location_array = location.split(", ");
+            const an_array = [];
+            for (let i = 0; i < location_array.length; i++) {
+                an_array.push(location_array[i].split(" ")[1])
+            }
+            draw.text(an_array.join("\n")).move(x2 - 48, y1 + 3).font("size", 14).fill("#b06400");
         }
     }
 
@@ -264,34 +283,90 @@ class Edt {
                 break;
         }
     }
+
+    static group
+
+    static setGroup(group) {
+        this.group = group;
+        //onSelect($('#calendar').calendar("get focus date"));
+    }
 }
 
-UiCore.registerTag("edt", element => {
-    const edt = new Edt(element, 23, 30, 45, 230, 1, Edt.material);
-    const svg = document.getElementsByTagName("svg")[0];
-    svg.removeAttribute('height');
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("viewBox", "0 0 "+edt.svg._width+" "+edt.svg._height+"");
+let onSelect = () => {};
 
-    const onSelect = function(date) {
-        Edt.setEdtContainerState(Edt.edtContainerState.LOADING);
-        let startDate = new Date(date);
-        startDate.setHours(0, 0, 0, 0);
-        let endDate = new Date(startDate);
-        const diffMonday = startDate.getDay() - 1;
-        const diffSaturday = 6 - endDate.getDay();
-        startDate.setHours(-24 * diffMonday);
-        endDate.setHours(24 * diffSaturday);
-        const isoDate = (iso_str) => {
-            if (iso_str.indexOf("Z") === iso_str.length - 1) return iso_str.slice(0, iso_str.length - 1);
-            else return iso_str;
-        };
-        Api.backend.getSchedule(isoDate(startDate.toISOString()), isoDate(endDate.toISOString()), "1B01A1PRSA", reponse => {
-            Edt.setEdtContainerState(Edt.edtContainerState.READY);
-            console.log(reponse)
-            edt.setEdt(reponse);
+UiCore.registerTag("edt", element => {
+    UiCore.registerTag("edt-select", elt => {
+        Api.backend.getMyGroups(myGroups => {
+            new Template("edt-group-select", {
+                "groups": myGroups
+            }, elt, () => {
+                const jquerySelect = $('.ui.dropdown');
+                jquerySelect
+                    .dropdown()
+                ;
+                const select = jquerySelect[0];
+                jquerySelect.dropdown("set selected", select.children[3].children[0].getAttribute("data-value"));
+                Edt.group = select.children[3].children[0].getAttribute("data-value");
+                const edt = new Edt(element, 23, 30, 45, 230, 1, Edt.material);
+                const svg = document.getElementsByTagName("svg")[0];
+                svg.removeAttribute('height');
+                svg.setAttribute("width", "100%");
+                svg.setAttribute("viewBox", "0 0 "+edt.svg._width+" "+edt.svg._height+"");
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                today.setHours(-24 * (today.getDay() - 1));
+                onSelect = function(date) {
+                    Edt.setEdtContainerState(Edt.edtContainerState.LOADING);
+                    let startDate = new Date(date);
+                    startDate.setHours(0, 0, 0, 0);
+                    let endDate = new Date(startDate);
+                    const diffMonday = startDate.getDay() - 1;
+                    const diffSaturday = 6 - endDate.getDay();
+                    startDate.setHours(-24 * diffMonday);
+                    endDate.setHours(24 * diffSaturday);
+                    const isoDate = (iso_str) => {
+                        if (iso_str.indexOf("Z") === iso_str.length - 1) return iso_str.slice(0, iso_str.length - 1);
+                        else return iso_str;
+                    };
+                    Api.backend.getSchedule(isoDate(startDate.toISOString()), isoDate(endDate.toISOString()), parseInt(Edt.group), reponse => {
+                        Edt.setEdtContainerState(Edt.edtContainerState.READY);
+                        console.log(reponse)
+                        edt.setEdt(reponse);
+                    }, err => {
+                        Edt.setEdtContainerState(Edt.edtContainerState.ERROR);
+                        $('body')
+                            .toast({
+                                class: 'error',
+                                message: err.message
+                            })
+                        ;
+                    });
+                };
+
+                onSelect(new Date());
+
+                $('#calendar')
+                    .calendar({
+                        type: 'date',
+                        firstDayOfWeek: 1,
+                        text: {
+                            days: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
+                            months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', `Juillet`, 'Août', 'Septembre', 'Octobre', 'Novembre', 'Decembre'],
+                            monthsShort: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
+                            today: 'Aujourd\'hui',
+                            now: 'Maintenant',
+                            am: 'AM',
+                            pm: 'PM'
+                        },
+                        disabledDaysOfWeek: [6, 0],
+                        onSelect: onSelect,
+                        minDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14),
+                        maxDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 27)
+                    })
+                ;
+            });
         }, err => {
-            Edt.setEdtContainerState(Edt.edtContainerState.ERROR);
             $('body')
                 .toast({
                     class: 'error',
@@ -299,26 +374,6 @@ UiCore.registerTag("edt", element => {
                 })
             ;
         });
-    };
-
-    onSelect(new Date());
-
-    $('#calendar')
-        .calendar({
-            type: 'date',
-            firstDayOfWeek: 1,
-            text: {
-                days: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
-                months: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', `Juillet`, 'Août', 'Septembre', 'Octobre', 'Novembre', 'Decembre'],
-                monthsShort: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'],
-                today: 'Aujourd\'hui',
-                now: 'Maintenant',
-                am: 'AM',
-                pm: 'PM'
-            },
-            disabledDaysOfWeek: [6, 0],
-            onSelect: onSelect
-        })
-    ;
+        });
 });
 
