@@ -8,7 +8,7 @@ pub struct Course {
     /// Unique ID
     pub id: String,
     pub start: NaiveDateTime,
-    pub end: NaiveDateTime,
+    pub end: Option<NaiveDateTime>,
     pub category: Option<String>,
 
     /// Subject being taught

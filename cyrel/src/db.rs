@@ -1,8 +1,10 @@
+use chrono::NaiveDateTime;
 use log::{error, info, warn};
 use sqlx::PgPool;
 
 use crate::models::{Department, Group, User};
 use crate::rpc::RpcError;
+use crate::schedule::Course;
 
 pub struct Db {}
 
@@ -241,5 +243,50 @@ WHERE private = false
         }
 
         Ok(groups)
+    }
+
+    pub async fn get_group_courses(pool: &PgPool, group_id: i32, start: NaiveDateTime, end: NaiveDateTime) -> anyhow::Result<Vec<Course>> {
+        let courses_id = sqlx::query!(
+            r#"
+SELECT course_id
+FROM groups_courses
+WHERE group_id = $1
+        "#,
+            group_id
+        )
+            .fetch_all(pool)
+            .await?;
+
+        let mut courses = Vec::<Course>::new();
+
+        for course_id in courses_id {
+            let course = sqlx::query!(
+            r#"
+SELECT id, start_time, end_time, category, module, room, teacher, description
+FROM courses
+WHERE id = $1
+        "#,
+            course_id.course_id
+        )
+                .fetch_one(pool)
+                .await?;
+
+            let course = Course {
+                id: course.id,
+                start: course.start_time,
+                end: course.end_time,
+                category: course.category,
+                module: course.module,
+                room: course.room,
+                teacher: course.teacher,
+                description: course.description,
+            };
+
+            if course.start >= start && course.start <= end {
+                courses.push(course);
+            }
+        }
+
+        Ok(courses)
     }
 }

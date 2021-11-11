@@ -79,7 +79,7 @@ pub trait Rpc {
         meta: Self::Metadata,
         start: NaiveDateTime,
         end: NaiveDateTime,
-        group: i64,
+        group: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>>;
 }
 
@@ -394,7 +394,7 @@ impl Rpc for RpcImpl {
         meta: Self::Metadata,
         start: NaiveDateTime,
         end: NaiveDateTime,
-        group: i64,
+        group: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
@@ -402,13 +402,18 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into())
             }
             let user = user.unwrap();
-            fetch_calendar(start, end, group)
-                .await
-                .map_err(|err| jsonrpc_core::Error {
-                    code: jsonrpc_core::ErrorCode::ServerError(-32000),
-                    message: format!("{}", err),
-                    data: None,
-                })
+            let is_in_group = Db::is_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
+            match is_in_group {
+                Ok(_) => {}
+                Err(_) => {
+                    return Err(RpcError::Unimplemented.into());
+                }
+            }
+            let get_courses = Db::get_group_courses(RpcImpl::get_postgres(), group, start, end).await;
+            return match get_courses {
+                Ok(courses) => Ok(courses),
+                Err(_) => Err(RpcError::Unimplemented.into())
+            }
         })
     }
 }
