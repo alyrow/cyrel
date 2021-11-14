@@ -43,7 +43,7 @@ impl Claims {
             &DecodingKey::from_secret(secret.as_bytes()),
             &Validation::default(),
         )
-            .map(|j| Some(j.claims))
+        .map(|j| Some(j.claims))
     }
 
     pub fn from_user(user: &User) -> Self {
@@ -70,13 +70,12 @@ impl CheckUser {
         let user: User = {
             let result = Db::match_user_by_id(&pool, sub.parse::<i64>().unwrap()).await;
 
-            match result
-            {
+            match result {
                 Ok(user) => user,
                 Err(_) => {
                     warn!("unknown connected user {}", sub);
                     return Err(RpcError::IncorrectLoginInfo.into());
-                },
+                }
             }
         };
         Ok(user)
@@ -88,7 +87,7 @@ impl CheckUser {
                 Ok(claims) => claims,
                 Err(err) => {
                     warn!("{}", err.to_string());
-                    return None
+                    return None;
                 }
             };
             let claims = claims.unwrap();

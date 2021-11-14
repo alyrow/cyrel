@@ -18,8 +18,8 @@ WHERE id = $1
         "#,
             id
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Ok(User {
             id,
@@ -39,8 +39,8 @@ WHERE email = $1
         "#,
             email
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Ok(User {
             id: user.id,
@@ -103,8 +103,8 @@ VALUES ($1, $2, $3, $4, $5)
             user.email,
             user.password
         )
-            .execute(&mut tx)
-            .await?;
+        .execute(&mut tx)
+        .await?;
         tx.commit().await?;
 
         Ok(())
@@ -119,8 +119,8 @@ WHERE id = $1
         "#,
             group
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Ok(Group {
             id: grp.id,
@@ -131,7 +131,11 @@ WHERE id = $1
         })
     }
 
-    pub async fn is_user_in_group(pool: &PgPool, user_id: i64, group_id: i32) -> anyhow::Result<()> {
+    pub async fn is_user_in_group(
+        pool: &PgPool,
+        user_id: i64,
+        group_id: i32,
+    ) -> anyhow::Result<()> {
         let grp = sqlx::query!(
             r#"
 SELECT user_id, group_id
@@ -141,13 +145,17 @@ WHERE user_id = $1 AND group_id = $2
             user_id,
             group_id
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Ok(())
     }
 
-    pub async fn insert_user_in_group(pool: &PgPool, user_id: i64, group_id: i32) -> anyhow::Result<()> {
+    pub async fn insert_user_in_group(
+        pool: &PgPool,
+        user_id: i64,
+        group_id: i32,
+    ) -> anyhow::Result<()> {
         let user: User = {
             let result = Db::match_user_by_id(pool, user_id).await;
             match result {
@@ -174,9 +182,12 @@ WHERE user_id = $1 AND group_id = $2
         let result = Db::is_user_in_group(pool, user.id, group.id).await;
         match result {
             Ok(_) => {
-                warn!("user {} is already in group {} ({})", user.id, group.id, group.name);
+                warn!(
+                    "user {} is already in group {} ({})",
+                    user.id, group.id, group.name
+                );
                 return Err(RpcError::Unimplemented.into());
-            },
+            }
             Err(_) => {}
         }
 
@@ -189,8 +200,8 @@ VALUES ($1, $2)
             user.id,
             group.id
         )
-            .execute(&mut tx)
-            .await?;
+        .execute(&mut tx)
+        .await?;
         tx.commit().await?;
 
         Ok(())
@@ -205,8 +216,8 @@ WHERE user_id = $1
         "#,
             user_id
         )
-            .fetch_all(pool)
-            .await?;
+        .fetch_all(pool)
+        .await?;
 
         let mut groups = Vec::<Group>::new();
 
@@ -226,8 +237,8 @@ FROM groups
 WHERE private = false
         "#
         )
-            .fetch_all(pool)
-            .await?;
+        .fetch_all(pool)
+        .await?;
 
         let mut groups = Vec::<Group>::new();
 
@@ -245,7 +256,12 @@ WHERE private = false
         Ok(groups)
     }
 
-    pub async fn get_group_courses(pool: &PgPool, group_id: i32, start: NaiveDateTime, end: NaiveDateTime) -> anyhow::Result<Vec<Course>> {
+    pub async fn get_group_courses(
+        pool: &PgPool,
+        group_id: i32,
+        start: NaiveDateTime,
+        end: NaiveDateTime,
+    ) -> anyhow::Result<Vec<Course>> {
         let courses_id = sqlx::query!(
             r#"
 SELECT course_id
@@ -254,22 +270,22 @@ WHERE group_id = $1
         "#,
             group_id
         )
-            .fetch_all(pool)
-            .await?;
+        .fetch_all(pool)
+        .await?;
 
         let mut courses = Vec::<Course>::new();
 
         for course_id in courses_id {
             let course = sqlx::query!(
-            r#"
+                r#"
 SELECT id, start_time, end_time, category, module, room, teacher, description
 FROM courses
 WHERE id = $1
         "#,
-            course_id.course_id
-        )
-                .fetch_one(pool)
-                .await?;
+                course_id.course_id
+            )
+            .fetch_one(pool)
+            .await?;
 
             let course = Course {
                 id: course.id,

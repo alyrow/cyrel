@@ -55,16 +55,10 @@ pub trait Rpc {
     ) -> BoxFuture<jsonrpc_core::Result<String>>;
 
     #[rpc(meta, name = "my_groups_get", params = "named")]
-    fn my_groups_get(
-        &self,
-        meta: Self::Metadata,
-    ) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
+    fn my_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
 
     #[rpc(meta, name = "all_groups_get", params = "named")]
-    fn all_groups_get(
-        &self,
-        meta: Self::Metadata,
-    ) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
+    fn all_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
 
     #[rpc(meta, name = "groups_join", params = "named")]
     fn groups_join(
@@ -329,7 +323,7 @@ impl Rpc for RpcImpl {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into())
+                return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
             let result = Db::get_user_groups(RpcImpl::get_postgres(), user.id).await;
@@ -347,7 +341,7 @@ impl Rpc for RpcImpl {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into())
+                return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
             let result = Db::get_all_groups(RpcImpl::get_postgres(), user.id).await;
@@ -361,19 +355,24 @@ impl Rpc for RpcImpl {
         })
     }
 
-    fn groups_join(&self, meta: Self::Metadata, groups: Vec<i32>) -> BoxFuture<jsonrpc_core::Result<String>> {
+    fn groups_join(
+        &self,
+        meta: Self::Metadata,
+        groups: Vec<i32>,
+    ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into())
+                return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
 
             let mut failure = Vec::<i32>::new();
             for group in groups {
-                let result = Db::insert_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
+                let result =
+                    Db::insert_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
                 match result {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(_) => {
                         warn!("Failed to add user {} in group {}", user.id, group);
                         failure.push(group);
@@ -385,7 +384,7 @@ impl Rpc for RpcImpl {
                 Ok("Success!".parse().unwrap())
             } else {
                 Err(RpcError::Unimplemented.into())
-            }
+            };
         })
     }
 
@@ -399,7 +398,7 @@ impl Rpc for RpcImpl {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into())
+                return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
             let is_in_group = Db::is_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
@@ -409,11 +408,12 @@ impl Rpc for RpcImpl {
                     return Err(RpcError::Unimplemented.into());
                 }
             }
-            let get_courses = Db::get_group_courses(RpcImpl::get_postgres(), group, start, end).await;
+            let get_courses =
+                Db::get_group_courses(RpcImpl::get_postgres(), group, start, end).await;
             return match get_courses {
                 Ok(courses) => Ok(courses),
-                Err(_) => Err(RpcError::Unimplemented.into())
-            }
+                Err(_) => Err(RpcError::Unimplemented.into()),
+            };
         })
     }
 }
