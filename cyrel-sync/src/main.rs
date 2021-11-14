@@ -70,7 +70,7 @@ async fn update_students(pool: &PgPool, celcat: &Celcat) -> anyhow::Result<()> {
 INSERT INTO celcat_students (id, firstname, lastname, department)
 VALUES ( $1, $2, $3, $4 )
 ON CONFLICT (id) DO UPDATE
-SET (firstname, lastname) = (EXCLUDED.firstname, EXCLUDED.lastname)
+SET (firstname, lastname, department) = (EXCLUDED.firstname, EXCLUDED.lastname, EXCLUDED.department)
             "#,
             s.id.0.parse::<i64>()?,
             firstname,
@@ -203,16 +203,6 @@ async fn update_course(
     let mut tx = pool.begin().await?;
     sqlx::query!(
         r#"
-DELETE FROM courses
-WHERE id = $1
-        "#,
-        course.id.0
-    )
-    .execute(&mut tx)
-    .await?;
-
-    sqlx::query!(
-        r#"
 INSERT INTO courses
     ( id
     , start_time
@@ -224,6 +214,22 @@ INSERT INTO courses
     , description
     )
 VALUES ( $1, $2, $3, $4, $5, $6, $7, $8 )
+ON CONFLICT (id) DO UPDATE
+SET ( start_time
+    , end_time
+    , category
+    , module
+    , room
+    , teacher
+    , description
+    ) = ( EXCLUDED.start_time
+        , EXCLUDED.end_time
+        , EXCLUDED.category
+        , EXCLUDED.module
+        , EXCLUDED.room
+        , EXCLUDED.teacher
+        , EXCLUDED.description
+        )
         "#,
         course.id.0,
         course.start,
