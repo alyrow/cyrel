@@ -61,6 +61,7 @@
         src = ./.;
         inherit nativeBuildInputs buildInputs;
         doCheck = true;
+        SQLX_OFFLINE = "1";
       };
     });
 }

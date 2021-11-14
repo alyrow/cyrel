@@ -1,0 +1,86 @@
+{
+  "db": "PostgreSQL",
+  "194319c67adddd4a3691dff15d5fa6e8a63aa2010a3b8c7bd61720bb127e51fa": {
+    "query": "\nINSERT INTO courses\n    ( id\n    , start_time\n    , end_time\n    , category\n    , module\n    , room\n    , teacher\n    , description\n    )\nVALUES ( $1, $2, $3, $4, $5, $6, $7, $8 )\nON CONFLICT (id) DO UPDATE\nSET ( start_time\n    , end_time\n    , category\n    , module\n    , room\n    , teacher\n    , description\n    ) = ( EXCLUDED.start_time\n        , EXCLUDED.end_time\n        , EXCLUDED.category\n        , EXCLUDED.module\n        , EXCLUDED.room\n        , EXCLUDED.teacher\n        , EXCLUDED.description\n        )\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Timestamp",
+          "Timestamp",
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "284f50476528a4f2161a601934a0ec20ad0bcc573275f579751aca1fc5296581": {
+    "query": "\nINSERT INTO groups_courses (group_id, course_id)\nVALUES ( $1, $2 )\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "64dac92921703969cadc9ad38341199f327d1db85663670f2c8a8b054a26a1b7": {
+    "query": "\nSELECT id, referent\nFROM groups\nWHERE referent IS NOT NULL\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "referent",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        true
+      ]
+    }
+  },
+  "95618c59e6e2ad93e844effbb9bee5b59fc0ff2fde782523b2d4551175589c8e": {
+    "query": "\nDELETE FROM groups_courses\nWHERE group_id = $1\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b7b831d780792ad787cbcf242854d903d9a36532a999aba0a0603da41ab0b481": {
+    "query": "\nINSERT INTO celcat_students (id, firstname, lastname, department)\nVALUES ( $1, $2, $3, $4 )\nON CONFLICT (id) DO UPDATE\nSET (firstname, lastname, department) = (EXCLUDED.firstname, EXCLUDED.lastname, EXCLUDED.department)\n            ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}

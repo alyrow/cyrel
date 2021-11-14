@@ -1,0 +1,400 @@
+{
+  "db": "PostgreSQL",
+  "09dfad43782d5fefcc888768dff93ecb499c844b8d0f7754a7e496cfe9b7b37e": {
+    "query": "\nINSERT INTO users (id, firstname, lastname, email, password)\nVALUES ($1, $2, $3, $4, $5)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "22a5283cea91d904068cc3202bd3ba7f4b8964d61423d90992def8d4a7466071": {
+    "query": "\nSELECT course_id\nFROM groups_courses\nWHERE group_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "course_id",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "2dc8afdf3ae100a9eb4e73643af74c85c567e9710f06e96fb0ec2feefb48604f": {
+    "query": "\nSELECT id, start_time, end_time, category, module, room, teacher, description\nFROM courses\nWHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "start_time",
+          "type_info": "Timestamp"
+        },
+        {
+          "ordinal": 2,
+          "name": "end_time",
+          "type_info": "Timestamp"
+        },
+        {
+          "ordinal": 3,
+          "name": "category",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 4,
+          "name": "module",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 5,
+          "name": "room",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 6,
+          "name": "teacher",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 7,
+          "name": "description",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  },
+  "515e68dfd12317e880914ff76125c5b3c4eadaa88eccf655303c160a1156697e": {
+    "query": "\nSELECT id, firstname, lastname, email, password\nFROM users\nWHERE email = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "firstname",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "lastname",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "email",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 4,
+          "name": "password",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "76523989e0a1785d1d666c14763cacdf24476a70c5c1537ce933055aca41ad8a": {
+    "query": "\nSELECT id, name, domain\nFROM departments\nWHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "domain",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "7f546034f970dbcc6bf41b7a96b02e73a6f027e14d4e7508933fab4beaec4efe": {
+    "query": "\nSELECT firstname, lastname\nFROM celcat_students\nWHERE id = $1 AND department = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "firstname",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 1,
+          "name": "lastname",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "8453af3bc1434ec0388c7efb010e5641a94c436f08fafa092674e1e51e9a7125": {
+    "query": "\nSELECT id, name, referent, parent, private\nFROM groups\nWHERE private = false\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "referent",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "parent",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 4,
+          "name": "private",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        false
+      ]
+    }
+  },
+  "96543c332ea0d3554d0de042533cf0d37013c01649bb5927b5d89ebbd323fea6": {
+    "query": "\nSELECT id, firstname, lastname, email, password\nFROM users\nWHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "firstname",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "lastname",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 3,
+          "name": "email",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 4,
+          "name": "password",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b2e0c126682f47b0c322878f0bf48ac52c805c3d10f249600f7aef07370a5a15": {
+    "query": "\nSELECT user_id, group_id\nFROM users_groups\nWHERE user_id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "group_id",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "ba6149cb6be7d2e65db9f52aba7cf54eeb881d398c15833d29fcbf22463271f1": {
+    "query": "\nSELECT user_id, group_id\nFROM users_groups\nWHERE user_id = $1 AND group_id = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "group_id",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "c34e2f396e17c1101334729a2ba876f86194b94fd58f2e65b4259c66a0b080d9": {
+    "query": "\nSELECT id, name, referent, parent, private\nFROM groups\nWHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "referent",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "parent",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 4,
+          "name": "private",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        false
+      ]
+    }
+  },
+  "d1bca21b309317b36d5721d78ace36a8bb494b638139d951e9ed67e61ec35be1": {
+    "query": "\nINSERT INTO users_groups (user_id, group_id)\nVALUES ($1, $2)\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}
