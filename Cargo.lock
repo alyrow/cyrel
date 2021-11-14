@@ -878,7 +878,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-core"
 version = "18.0.0"
-source = "git+https://github.com/luc65r/jsonrpc#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
+source = "git+https://github.com/luc65r/jsonrpc?rev=6ae633c0fa4dfdc00711877ac2154a83bdc08611#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
 dependencies = [
  "futures",
  "futures-executor",
@@ -892,7 +892,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-derive"
 version = "18.0.0"
-source = "git+https://github.com/luc65r/jsonrpc#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
+source = "git+https://github.com/luc65r/jsonrpc?rev=6ae633c0fa4dfdc00711877ac2154a83bdc08611#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -903,7 +903,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-http-server"
 version = "18.0.0"
-source = "git+https://github.com/luc65r/jsonrpc#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
+source = "git+https://github.com/luc65r/jsonrpc?rev=6ae633c0fa4dfdc00711877ac2154a83bdc08611#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
 dependencies = [
  "futures",
  "hyper",
@@ -918,7 +918,7 @@ dependencies = [
 [[package]]
 name = "jsonrpc-server-utils"
 version = "18.0.0"
-source = "git+https://github.com/luc65r/jsonrpc#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
+source = "git+https://github.com/luc65r/jsonrpc?rev=6ae633c0fa4dfdc00711877ac2154a83bdc08611#6ae633c0fa4dfdc00711877ac2154a83bdc08611"
 dependencies = [
  "bytes",
  "futures",

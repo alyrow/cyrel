@@ -15,9 +15,9 @@ env_logger = "0.9"
 futures = "0.3"
 dotenv = "0.15"
 html-escape = "0.2"
-jsonrpc-core = { git = "https://github.com/luc65r/jsonrpc" }
-jsonrpc-derive = { git = "https://github.com/luc65r/jsonrpc" }
-jsonrpc-http-server = { git = "https://github.com/luc65r/jsonrpc" }
+jsonrpc-core = { git = "https://github.com/luc65r/jsonrpc", rev = "6ae633c0fa4dfdc00711877ac2154a83bdc08611" }
+jsonrpc-derive = { git = "https://github.com/luc65r/jsonrpc", rev = "6ae633c0fa4dfdc00711877ac2154a83bdc08611" }
+jsonrpc-http-server = { git = "https://github.com/luc65r/jsonrpc", rev = "6ae633c0fa4dfdc00711877ac2154a83bdc08611" }
 jsonwebtoken = "7"
 lazy_static = "1.4"
 log = "0.4"
