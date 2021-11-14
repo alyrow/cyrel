@@ -323,9 +323,9 @@ dependencies = [
 
 [[package]]
 name = "cy-celcat"
-version = "0.2.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71792fa177872433df3c01a4aced34981473dc4806045994c94002ad5e1792e5"
+checksum = "d95d95b52b0498d4515b4f918fe9112449934e336935c63aac47b76f1a955d67"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -334,6 +334,7 @@ dependencies = [
  "regex",
  "reqwest",
  "serde 1.0.130",
+ "serde_json",
  "thiserror",
 ]
 
@@ -345,7 +346,6 @@ dependencies = [
  "chrono",
  "clap",
  "config",
- "cy-celcat",
  "dotenv",
  "env_logger",
  "futures",
@@ -382,7 +382,9 @@ dependencies = [
  "chrono",
  "cy-celcat",
  "dotenv",
+ "env_logger",
  "futures",
+ "log",
  "sqlx",
  "tokio",
 ]

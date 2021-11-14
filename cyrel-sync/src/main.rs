@@ -1,40 +1,52 @@
 use std::env;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use celcat::{
     entities::{Student, StudentId},
     fetch::Celcat,
     fetchable::{
-        calendar::{CalendarData, CalendarDataRequest, CalView, Course},
-        event::{RawSideBarEventElement, SideBarEvent, SideBarEventElement, SideBarEventRequest},
+        calendar::{CalView, CalendarData, CalendarDataRequest, Course},
+        event::{Element, Event, EventRequest, RawElement},
         resources::{ResourceList, ResourceListRequest},
     },
 };
 use chrono::naive::NaiveDate;
 use dotenv::dotenv;
 use futures::future::try_join_all;
+use log::error;
 use sqlx::postgres::PgPool;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    env_logger::init();
     let _ = dotenv();
 
-    let pool = PgPool::connect(&env::var("DATABASE_URL")?).await?;
+    let pool = PgPool::connect(&env::var("DATABASE_URL")?)
+        .await
+        .context("Failed to connect to PostgreSQL")?;
     let celcat = {
-        let mut c = Celcat::new("https://services-web.u-cergy.fr/calendar").await?;
+        let mut c = Celcat::new("https://services-web.u-cergy.fr/calendar")
+            .await
+            .context("Failed to connect to Celcat")?;
         c.login(&env::var("CELCAT_USERNAME")?, &env::var("CELCAT_PASSWORD")?)
-            .await?;
+            .await
+            .context("Failed to login to Celcat")?;
         c
     };
 
-    update_students(&pool, &celcat).await?;
+    update_students(&pool, &celcat)
+        .await
+        .context("Failed to update student list")?;
 
-    /*let gr = get_group_referents(&pool).await?;
+    let gr = get_group_referents(&pool)
+        .await
+        .context("Failed to get groups referents")?;
     try_join_all(
         gr.into_iter()
             .map(|(g, r)| update_courses(&pool, &celcat, g, r)),
     )
-    .await?;*/
+    .await
+    .context("Failed to update courses")?;
 
     Ok(())
 }
@@ -132,7 +144,8 @@ WHERE group_id = $1
             .iter()
             .map(|c| update_course(pool, celcat, group, c)),
     )
-    .await?;
+    .await
+    .with_context(|| format!("Failed to update courses for group {}", group))?;
 
     Ok(())
 }
@@ -143,11 +156,21 @@ async fn update_course(
     group: i32,
     course: &Course,
 ) -> anyhow::Result<()> {
-    let event: SideBarEvent = celcat
-        .fetch(SideBarEventRequest {
+    let event: Event = match celcat
+        .fetch(EventRequest {
             event_id: course.id.clone(),
         })
-        .await?;
+        .await
+    {
+        Ok(event) => event,
+        Err(err) => {
+            error!(
+                "Failed to fetch side bar event for course {}: {}",
+                course.id.0, err
+            );
+            return Ok(());
+        }
+    };
 
     let mut category: Option<String> = None;
     let mut module: Option<String> = None;
@@ -155,22 +178,22 @@ async fn update_course(
     let mut teacher: Option<String> = None;
     let mut description: Option<String> = None;
 
-    for e in event.elements {
-        use SideBarEventElement::*;
+    for e in event.elements.0 {
+        use Element::*;
         match e {
-            Category(RawSideBarEventElement { content, .. }) => {
+            Category(RawElement { content, .. }) => {
                 category = content;
             }
-            Module(RawSideBarEventElement { content, .. }) => {
+            Module(RawElement { content, .. }) => {
                 module = content;
             }
-            Room(RawSideBarEventElement { content, .. }) => {
+            Room(RawElement { content, .. }) => {
                 room = content;
             }
-            Teacher(RawSideBarEventElement { content, .. }) => {
+            Teacher(RawElement { content, .. }) => {
                 teacher = content;
             }
-            Name(RawSideBarEventElement { content, .. }) => {
+            Name(RawElement { content, .. }) => {
                 description = content;
             }
             _ => {}
