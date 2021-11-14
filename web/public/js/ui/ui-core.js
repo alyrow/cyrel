@@ -33,4 +33,8 @@ class UiCore {
         });
         parent.appendChild(element);
     }
+
+    static get mobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|SamsungBrowser/i.test(navigator.userAgent);
+    }
 }

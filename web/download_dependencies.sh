@@ -21,3 +21,6 @@ wget -O ./public/dependencies/json-rpc.min.js "$JSONRPC"
 
 echo Downloading svg lib...
 wget -O ./public/dependencies/svg.min.js "$SVG"
+
+echo Downloading svg pan zoom lib...
+wget -O ./public/dependencies/svg-pan-zoom.min.js "$SVG_PAN_ZOOM"
