@@ -64,7 +64,7 @@ class Template {
                             }
 
                             evaluate += "let innerHtml = _xElement;\n" +
-                                "innerHtml = innerHtml.replaceAll(/{{(\\S*)}}/gm, substring => {return eval(/{{(\\S*)}}/.exec(substring)[1])});\n" +
+                                "innerHtml = innerHtml.replace(/{{(\\S*)}}/gm, substring => {return eval(/{{(\\S*)}}/.exec(substring)[1])});\n" +
                                 "elementsContainer.innerHtml += innerHtml;\n";
 
                             if (runIf) evaluate += "}\n";
