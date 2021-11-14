@@ -31,7 +31,7 @@
     "name": "Paramètres - Groupes",
     "url": "/groups.html",
     "topBar": true,
-    "menu": false,
+    "menu": true,
     "showInMenu": false
   }
 ]
