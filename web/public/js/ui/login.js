@@ -1,6 +1,7 @@
 $('.ui.form')
     .form({
         revalidate: false,
+        keyboardShortcuts: false,
         fields: {
             email: {
                 identifier: 'email',

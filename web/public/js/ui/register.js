@@ -7,6 +7,7 @@ class RegisterSelect {
             $('#register_1')
                 .form({
                     revalidate: false,
+                    keyboardShortcuts: false,
                     fields: {
                         id: {
                             identifier: 'id',
@@ -63,6 +64,7 @@ document.getElementById("check").onclick = () => {
             $('#form-check')
                 .form({
                     revalidate: false,
+                    keyboardShortcuts: false,
                     fields: {
                         code: {
                             identifier: 'code',
@@ -96,6 +98,7 @@ document.getElementById("continue").onclick = () => {
             $('#register_2')
                 .form({
                     revalidate: false,
+                    keyboardShortcuts: false,
                     fields: {
                         firstname: {
                             identifier: 'firstname',
