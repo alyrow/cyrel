@@ -8,3 +8,21 @@
 .container {
     width: 95% !important;
 }
+
+*{
+    scrollbar-width: thin;
+    scrollbar-color: rgba(220, 220, 220, 0.5) rgba(170, 170, 170, 0.5);
+}
+
+*::-webkit-scrollbar {
+    width: -webkit-min-content;
+
+}
+
+*::-webkit-scrollbar-track {
+    background:rgba(220, 220, 220, 0.5);
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgba(170, 170, 170, 0.5);
+}
