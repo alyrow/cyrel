@@ -90,7 +90,13 @@ impl CheckUser {
                     return None;
                 }
             };
-            let claims = claims.unwrap();
+            let claims = match claims {
+                Some(claims) => claims,
+                None => {
+                    warn!("User not logged!");
+                    return None;
+                }
+            };
             let sub = claims.sub.to_owned();
             let check_result = CheckUser::jwt_check(RpcImpl::get_postgres(), sub).await;
             match check_result {
