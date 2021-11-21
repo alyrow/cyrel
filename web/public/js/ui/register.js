@@ -15,6 +15,10 @@ class RegisterSelect {
                                 {
                                     type: 'empty',
                                     prompt: 'Merci de renseigner votre numéro étudiant'
+                                },
+                                {
+                                    type: 'integer',
+                                    prompt: 'Merci de renseigner un numéro d\'étudiant valide'
                                 }
                             ]
                         },
