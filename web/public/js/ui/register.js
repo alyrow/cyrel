@@ -33,6 +33,10 @@ class RegisterSelect {
                                 {
                                     type: 'empty',
                                     prompt: 'Merci de renseigner votre email'
+                                },
+                                {
+                                    type   : 'doesntContain[@]',
+                                    prompt : 'Merci de renseigner que la partie avant le "@" de votre email'
                                 }
                             ]
                         }
