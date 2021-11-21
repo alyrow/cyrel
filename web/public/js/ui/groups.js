@@ -61,3 +61,7 @@ Api.backend.getMyGroups(myGroups => {
         })
     ;
 });
+
+$('.ui.accordion')
+    .accordion()
+;

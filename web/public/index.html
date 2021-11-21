@@ -23,25 +23,24 @@
 
 <top-bar></top-bar>
 
-<div class="ui container segment">
+<div class="ui red container segment">
     <h1>Site en phase de test</h1>
     <p>Attention, toutes vos données seront surement supprimées dans quelques jours.</p>
-    <p>Pour faire ajouter votre promo, contactez alyrow sur discord ou sur l'email d'inscription
-        en précisant la structure de votre promo comme ceci :</p>
-    <ul>
-        <li>ECOLE Pre-ing 2 MI VILLE
-            <ul>
-                <li>ECOLE Pre-ing 2 MI VILLE - Groupe 1
-                <p>Référent : numéro étudiant du réferent</p>
-                </li>
-                <li>ECOLE Pre-ing 2 MI VILLE - Groupe 2
-                    <p>Référent : numéro étudiant du réferent</p></li>
-            </ul>
-        </li>
-    </ul>
+</div>
 
-    <p>Inscrivez-vous <a href="/register.html">ici</a></p>
-    <p>Connectez-vous <a href="/login.html">ici</a></p>
+<div class="ui two column stackable grid">
+    <div class="column">
+        <div class="ui container segment">
+            <h1>Aujourd'hui</h1>
+            <div id="today"></div>
+        </div>
+    </div>
+    <div class="column">
+        <div class="ui container segment">
+            <h1>Demain</h1>
+            <div id="tomorrow"></div>
+        </div>
+    </div>
 </div>
 
 <test></test>
@@ -54,5 +53,6 @@
     });
 </script>
 <script defer src="js/ui/top-bar.js"></script>
+<script defer src="js/ui/index.js"></script>
 </body>
 </html>
