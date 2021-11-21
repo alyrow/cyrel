@@ -54,6 +54,9 @@ pub trait Rpc {
         password: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>>;
 
+    #[rpc(meta, name = "is_logged")]
+    fn is_logged(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<bool>>;
+
     #[rpc(meta, name = "my_groups_get", params = "named")]
     fn my_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>>;
 
@@ -316,6 +319,16 @@ impl Rpc for RpcImpl {
             };
             register.tokens.remove(&*hash);
             Ok("Account created!".to_string())
+        })
+    }
+
+    fn is_logged(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<bool>> {
+        Box::pin(async move {
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            return match user {
+                Some(_) => Ok(true),
+                None => Ok(false)
+            }
         })
     }
 
