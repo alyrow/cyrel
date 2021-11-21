@@ -1,7 +1,8 @@
 $('.ui.form')
     .form({
-        revalidate: false,
-        keyboardShortcuts: false,
+        onSuccess: function () {
+            document.getElementById("login").click();
+        },
         fields: {
             email: {
                 identifier: 'email',
@@ -35,7 +36,7 @@ $('.ui.form')
 
 document.getElementById("login").onclick = () => {
     const jquerySelector = $('.ui.form');
-    const elem = document.getElementsByTagName("form")[0];
+    const elem = document.getElementsByClassName("form")[0];
     jquerySelector.form("validate form");
     if (jquerySelector.form("is valid")) {
         elem.classList.add("loading");
