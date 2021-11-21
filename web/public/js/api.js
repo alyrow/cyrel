@@ -92,6 +92,20 @@ class Api {
     }
 
     /**
+     * Function which ask the backend if the user is logged
+     * @type {(onSuccess: function, onFailure: function) => void}
+     * @param onSuccess When the user state is retrieved
+     * @param onFailure When an error occur
+     */
+    isLogged(onSuccess, onFailure) {
+        this.#rpc.call("is_logged", {}, window.localStorage.getItem("__"))
+            .then(res => onSuccess(res))
+            .catch(err => {
+                onFailure(err);
+            });
+    }
+
+    /**
      * Function which retrieve a schedule
      * @type {(start: string, end: string, group: number, onSuccess: function, onFailure: function) => void}
      * @param start Start date of the schedule
@@ -158,4 +172,25 @@ class Api {
                     document.location.href = "/login.html";
             });
     }
+
+    static checkIfLoggedAndAct(api) {
+        const needLogin = document.querySelector('meta[name="logged"]').content === "1";
+        if (!needLogin) return;
+        const act = () => {
+            document.location.href = "/login.html";
+        };
+
+        if (!window.localStorage.getItem("__")) {
+            act();
+            return;
+        }
+        api.isLogged(bool => {
+            if (!bool) {
+                window.localStorage.removeItem("__");
+                act();
+            }
+        }, err => console.error(err))
+    }
 }
+
+Api.checkIfLoggedAndAct(Api.backend);

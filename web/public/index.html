@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="logged" content="1">
     <title>CYREL</title>
+    <link rel="manifest" href="manifest.json">
 
     <script src="js/config.js"></script>
     <script src="dependencies/json-rpc.min.js"></script>
@@ -13,12 +15,34 @@
     <link rel="stylesheet" type="text/css" href="dependencies/semantic/dist/semantic.min.css">
     <script src="dependencies/semantic/dist/semantic.min.js"></script>
 
+    <link rel="stylesheet" type="text/css" href="css/style.css">
     <script src="js/ui/ui-core.js"></script>
     <script src="js/ui/template.js"></script>
 </head>
 <body>
 
 <top-bar></top-bar>
+
+<div class="ui container segment">
+    <h1>Site en phase de test</h1>
+    <p>Attention, toutes vos données seront surement supprimées dans quelques jours.</p>
+    <p>Pour faire ajouter votre promo, contactez alyrow sur discord ou sur l'email d'inscription
+        en précisant la structure de votre promo comme ceci :</p>
+    <ul>
+        <li>ECOLE Pre-ing 2 MI VILLE
+            <ul>
+                <li>ECOLE Pre-ing 2 MI VILLE - Groupe 1
+                <p>Référent : numéro étudiant du réferent</p>
+                </li>
+                <li>ECOLE Pre-ing 2 MI VILLE - Groupe 2
+                    <p>Référent : numéro étudiant du réferent</p></li>
+            </ul>
+        </li>
+    </ul>
+
+    <p>Inscrivez-vous <a href="/register.html">ici</a></p>
+    <p>Connectez-vous <a href="/login.html">ici</a></p>
+</div>
 
 <test></test>
 
@@ -29,6 +53,6 @@
         console.log("New test element added!")
     });
 </script>
-<script src="js/ui/top-bar.js"></script>
+<script defer src="js/ui/top-bar.js"></script>
 </body>
 </html>
