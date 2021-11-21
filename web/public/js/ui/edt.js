@@ -295,6 +295,18 @@ class Edt {
         "tiers": "#6FFFFF"
     };
 
+    static material_dark = {
+        "primary": "#9ba1aa",
+        "secondary": "#72767d",
+        "text": "#dcddde",
+        "background": "#1b1c1d",
+        "td": "#4A4AFF",
+        "cm": "#FF0000",
+        "tp": "#FE8BAD",
+        "exam": "#00FFFF",
+        "tiers": "#6FFFFF"
+    };
+
     /**
      * Enum of edt container states
      * @type {{READY: number, LOADING: number, ERROR: number}}
@@ -348,7 +360,7 @@ UiCore.registerTag("edt", element => {
             }, elt, () => {
                 if (!UiCore.mobile) {
                     document.getElementById("pc-zoom").style.display = "block";
-                    if (localStorage.getItem("zoom") === null) localStorage.setItem("zoom", "1");
+                    if (localStorage.getItem("zoom") === null) localStorage.setItem("zoom", "0");
                     const checkJquery = $('.toggle.checkbox');
                     checkJquery.checkbox(Edt.pcZoom? 'check': 'uncheck');
                     checkJquery.checkbox({
@@ -367,7 +379,7 @@ UiCore.registerTag("edt", element => {
                 const select = jquerySelect[0];
                 jquerySelect.dropdown("set selected", select.children[3].children[0].getAttribute("data-value"));
                 Edt.group = select.children[3].children[0].getAttribute("data-value");
-                const edt = new Edt(element, 23, 30, 45, 230, 1, Edt.material);
+                const edt = new Edt(element, 23, 30, 45, 230, 1, UiCore.dark? Edt.material_dark : Edt.material);
                 const svg = document.getElementsByTagName("svg")[0];
                 svg.removeAttribute('height');
                 svg.setAttribute("width", "100%");
