@@ -15,7 +15,7 @@
 }
 
 *::-webkit-scrollbar {
-    width: -webkit-min-content;
+    width: 0.5vw;
 
 }
 
