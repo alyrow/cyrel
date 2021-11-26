@@ -96,7 +96,7 @@ document.getElementById("check").onclick = () => {
             document.getElementById("check-code").style.display = "block";
         }, failure => {
             elem.classList.remove("loading");
-            jquerySelector.form("add errors", [failure.message]);
+            jquerySelector.form("add errors", [UiCore.translateError(failure)]);
         });
     }
 };
@@ -164,7 +164,7 @@ document.getElementById("continue").onclick = () => {
             document.getElementById("end").style.display = "block";
         }, failure => {
             elem.classList.remove("loading");
-            jquerySelector.form("add errors", [failure.message]);
+            jquerySelector.form("add errors", [UiCore.translateError(failure)]);
         });
     }
 };
@@ -181,7 +181,7 @@ document.getElementById("register").onclick = () => {
             document.location.href = "/login.html";
         }, failure => {
             elem.classList.remove("loading");
-            jquerySelector.form("add errors", [failure.message]);
+            jquerySelector.form("add errors", [UiCore.translateError(failure)]);
         });
     }
 };

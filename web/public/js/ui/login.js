@@ -54,7 +54,7 @@ document.getElementById("login").onclick = () => {
         }, failure => {
             elem.classList.remove("loading");
             elem.classList.add("error");
-            jquerySelector.form("add errors", [failure.message]);
+            jquerySelector.form("add errors", [UiCore.translateError(failure)]);
             //document.getElementById("login-error").innerText = failure.message;
         });
     }

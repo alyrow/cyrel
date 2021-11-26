@@ -91,6 +91,16 @@ class UiCore {
         UiCore.dark? localStorage.setItem("dark", "0"): localStorage.setItem("dark", "1");
         document.location.reload();
     }
+
+    static translateError(err) {
+        const errors = Config.getConfig("errors");
+        const keys = Object.keys(errors);
+        for (let i = 0; i< keys.length; i++) {
+            // console.log(errors[keys[i]].code + "   " + err.code)
+            if (errors[keys[i]].code === err.code) return errors[keys[i]].message;
+        }
+        return err.message;
+    }
 }
 
 if (UiCore.dark) UiCore.setDarkAutoDestruct();

@@ -1,26 +1,26 @@
 {
   "UnknownError": {
     "code": 0,
-    "message": "unknown error"
+    "message": "Erreur inconnue"
   },
   "IncorrectLoginInfo": {
     "code": 1,
-    "message": "incorrect login information"
+    "message": "Information de connexion incorrecte"
   },
   "Unimplemented": {
     "code": 2,
-    "message": "unimplemented"
+    "message": "Non implémenté"
   },
   "AlreadyRegistered": {
     "code": 3,
-    "message": "already registered"
+    "message": "Déjà inscrit"
   },
   "RegistrationTokenUsed": {
     "code": 4,
-    "message": "the token was already used"
+    "message": "Le token d'inscription a déjà été utilisé"
   },
   "UnknownDepartment": {
     "code": 5,
-    "message": "the department supplied is unknown"
+    "message": "Le département fournit est inconnu"
   }
 }

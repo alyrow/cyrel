@@ -437,7 +437,7 @@ UiCore.registerTag("edt", element => {
                         $('body')
                             .toast({
                                 class: 'error',
-                                message: err.message
+                                message: UiCore.translateError(err)
                             })
                         ;
                     });
@@ -469,7 +469,7 @@ UiCore.registerTag("edt", element => {
             $('body')
                 .toast({
                     class: 'error',
-                    message: err.message
+                    message: UiCore.translateError(err)
                 })
             ;
         });

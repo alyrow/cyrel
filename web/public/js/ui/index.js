@@ -51,7 +51,7 @@ Api.backend.getMyGroups(myGroups => {
         $('body')
             .toast({
                 class: 'error',
-                message: err.message
+                message: UiCore.translateError(err)
             })
         ;
     });
@@ -78,7 +78,7 @@ Api.backend.getMyGroups(myGroups => {
         $('body')
             .toast({
                 class: 'error',
-                message: err.message
+                message: UiCore.translateError(err)
             })
         ;
     });
