@@ -20,6 +20,10 @@ class RegisterSelect {
                                 {
                                     type: 'integer',
                                     prompt: 'Merci de renseigner un numéro d\'étudiant valide'
+                                },
+                                {
+                                    type   : 'exactLength[8]',
+                                    prompt : 'Un numéro étudiant fait 8 caractères'
                                 }
                             ]
                         },
