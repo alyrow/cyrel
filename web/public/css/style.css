@@ -26,3 +26,11 @@
 *::-webkit-scrollbar-thumb {
     background-color: rgba(170, 170, 170, 0.5);
 }
+
+#logout {
+    transition-duration: 0.4s;
+}
+
+#logout:hover {
+    color: rgba(255, 0, 0, 0.9);
+}
