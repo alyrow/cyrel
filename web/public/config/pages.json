@@ -4,14 +4,16 @@
     "url": "/index.html",
     "topBar": true,
     "menu": true,
-    "showInMenu": true
+    "showInMenu": true,
+    "icon": "/images/logos/cyrel_square-128.png"
   },
   {
     "name": "Emploi du temps",
     "url": "/edt.html",
     "topBar": true,
     "menu": true,
-    "showInMenu": true
+    "showInMenu": true,
+    "icon": "/images/courses.svg"
   },
   {
     "name": "Connexion",
@@ -32,6 +34,7 @@
     "url": "/groups.html",
     "topBar": true,
     "menu": true,
-    "showInMenu": false
+    "showInMenu": false,
+    "icon": "/images/user-edit.svg"
   }
 ]

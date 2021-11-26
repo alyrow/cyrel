@@ -1,5 +1,6 @@
 <div class="ui left vertical menu sidebar">
     <a for-each="pages" as="page" run-if="page.showInMenu" href="{{page.url}}" class="item">
+        <img src="{{page.icon}}" alt="" class="icon" style="display: inline-block !important; width: 2.5em;">
         {{page.name}}
     </a>
 </div>
@@ -9,7 +10,10 @@
         <div class="item">
             <i if="menu" class="sidebar icon"></i>
         </div>
-        <div class="item">{{page_title}}</div>
+        <div class="item">
+            <img src="{{page_icon}}" alt="" style="margin-right: 15px">
+            {{page_title}}
+        </div>
 
         <div class="right menu">
             <a class="ui item" onclick="UiCore.switchTheme()">

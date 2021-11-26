@@ -16,6 +16,7 @@ class TopBar {
 
         new Template("top-bar", {
             "page_title": title,
+            "page_icon": thisPage.icon,
             "pages": pagesConf,
             "menu": thisPage && thisPage.menu,
             "logged": localStorage.getItem("__") !== null && localStorage.getItem("__") !== ""
