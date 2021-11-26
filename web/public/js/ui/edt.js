@@ -49,39 +49,65 @@ class Edt {
         let panZoom;
         if(!UiCore.mobile && Edt.pcZoom)
             panZoom = svgPanZoom(svg, {
-                controlIconsEnabled: false
-                , zoomEnabled: true
-                , dblClickZoomEnabled: false
-                , mouseWheelZoomEnabled: true
-                , preventMouseEventsDefault: true
-                , zoomScaleSensitivity: 0.2
-                , minZoom: 1
-                , maxZoom: 5
-                , fit: true
-                , contain: false
-                , center: true
-                , beforePan: (oldPan, newPan) => {
-                    var stopHorizontal = false
-                        , stopVertical = false
-                        , gutterWidth = 300
-                        , gutterHeight = 300
-                        // Computed variables
-                        , sizes = panZoom.getSizes()
-                        , leftLimit = -((sizes.viewBox.x + sizes.viewBox.width) * sizes.realZoom) + gutterWidth
-                        , rightLimit = sizes.width - gutterWidth - (sizes.viewBox.x * sizes.realZoom)
-                        , topLimit = -((sizes.viewBox.y + sizes.viewBox.height) * sizes.realZoom) + gutterHeight
-                        , bottomLimit = sizes.height - gutterHeight - (sizes.viewBox.y * sizes.realZoom)
+                controlIconsEnabled: false,
+                zoomEnabled: false,
+                dblClickZoomEnabled: false,
+                mouseWheelZoomEnabled: true,
+                preventMouseEventsDefault: true,
+                zoomScaleSensitivity: 0.2,
+                minZoom: 1,
+                maxZoom: 5,
+                fit: true,
+                contain: false,
+                center: true,
+                beforePan: (oldPan, newPan) => {
+                    const gutterWidth = 300,
+                        gutterHeight = 300,
+                        sizes = panZoom.getSizes(),
+                        leftLimit = -((sizes.viewBox.x + sizes.viewBox.width) * sizes.realZoom) + gutterWidth,
+                        rightLimit = sizes.width - gutterWidth - (sizes.viewBox.x * sizes.realZoom),
+                        topLimit = -((sizes.viewBox.y + sizes.viewBox.height) * sizes.realZoom) + gutterHeight,
+                        bottomLimit = sizes.height - gutterHeight - (sizes.viewBox.y * sizes.realZoom)
 
                     const customPan = {}
                     if (Math.round(panZoom.getZoom() * 1000) / 1000 === 1) {
                         customPan.x = 0;
                         customPan.y = 0;
                     } else {
-                        customPan.x = Math.max(leftLimit, Math.min(rightLimit, newPan.x))
-                        customPan.y = Math.max(topLimit, Math.min(bottomLimit, newPan.y))
+                        customPan.x = Math.max(leftLimit, Math.min(rightLimit, newPan.x));
+                        customPan.y = Math.max(topLimit, Math.min(bottomLimit, newPan.y));
                     }
 
                     return customPan;
+                },
+                customEventsHandler: {
+                    init: options => {
+                        this.mouseIn = false;
+                        this.keyDown = e => {
+                            if (e.key === "Control" && this.mouseIn)
+                                options.instance.enableZoom();
+                        };
+                        this.keyUp = e => {
+                            if (e.key === "Control")
+                                options.instance.disableZoom();
+                        };
+                        this.mouseEnter = e => {
+                            this.mouseIn = true;
+                        };
+                        this.mouseLeave = e => {
+                            this.mouseIn = false;
+                        };
+                        document.addEventListener("keydown", this.keyDown);
+                        document.addEventListener("keyup", this.keyUp);
+                        options.svgElement.addEventListener("mouseenter", this.mouseEnter);
+                        options.svgElement.addEventListener("mouseleave", this.mouseLeave);
+                    },
+                    destroy: options => {
+                        document.removeEventListener("keydown", this.keyDown);
+                        document.removeEventListener("keyup", this.keyUp);
+                        options.svgElement.removeEventListener("mouseenter", this.mouseEnter);
+                        options.svgElement.removeEventListener("mouseleave", this.mouseLeave);
+                    }
                 }
             });
     }
