@@ -196,6 +196,17 @@ class Api {
             }
         }, err => console.error(err))
     }
+
+    static checkIfGroupAndAct(api) {
+        const needGroup = document.querySelector('meta[name="group"]').content === "1";
+        if (!needGroup) return;
+        api.getMyGroups(groups => {
+            if (groups.length === 0) {
+                document.location.href = "/groups.html";
+            }
+        }, err => console.error(err))
+    }
 }
 
 Api.checkIfLoggedAndAct(Api.backend);
+Api.checkIfGroupAndAct(Api.backend);
