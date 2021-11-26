@@ -4,13 +4,17 @@
         <div class="header">{{course.module}}</div>
         <div class="meta">
             <span class="date">
-                {{course.start.toLocaleTimeString()}}
+                {{course.start}}
                 -
-                {{course.end.toLocaleTimeString()}}
+                {{course.end}}
             </span>
         </div>
     </div>
     <div class="extra content">
+        <div>
+            <i class="building icon"></i>
+            {{course.room}}
+        </div>
         <div>
             <i class="user icon"></i>
             {{course.teacher}}
@@ -24,13 +28,17 @@
         <div class="header">{{course.module}}</div>
         <div class="meta">
             <span class="date">
-                {{course.start.toLocaleTimeString()}}
+                {{course.start}}
                 -
-                {{course.end.toLocaleTimeString()}}
+                {{course.end}}
             </span>
         </div>
     </div>
     <div class="extra content">
+        <div>
+            <i class="building icon"></i>
+            {{course.room}}
+        </div>
         <div>
             <i class="user icon"></i>
             {{course.teacher}}

@@ -18,6 +18,16 @@ Api.backend.getMyGroups(myGroups => {
     const startTomorrow = new Date(endToday);
     const endTomorrow = new Date(startTomorrow);
     endTomorrow.setDate(endTomorrow.getDate() + 1);
+
+    const validateCourse = (course) => {
+        if (course === null) return course;
+        if (course.module === null) course.module = course.category;
+        if (course.teacher === null) course.teacher = "Inconnu";
+        course.start = course.start.getHours() + "h" + (course.start.getMinutes() < 10 ? "0" : "") + course.start.getMinutes();
+        course.end = course.end.getHours() + "h" + (course.end.getMinutes() < 10 ? "0" : "") + course.end.getMinutes();
+        return course;
+    }
+
     Api.backend.getSchedule(isoDate(startToday.toISOString()), isoDate(endToday.toISOString()), group, today => {
         for (let i = 0; i < today.length; i++) {
             today[i].start = new Date(today[i].start);
@@ -28,10 +38,10 @@ Api.backend.getMyGroups(myGroups => {
         if (today.length > 0) {
             const todayCourses = {
                 "now": [
-                    (startToday >= today[0].start && startToday <= today[0].end) ? today[0] : null
+                    validateCourse((startToday >= today[0].start && startToday <= today[0].end) ? today[0] : null)
                 ],
                 "next": [
-                    (startToday >= today[0].start && startToday <= today[0].end) ? today[1] : today[0]
+                    validateCourse((startToday >= today[0].start && startToday <= today[0].end) ? today[1] : today[0])
                 ]
             };
             new Template("today-courses", todayCourses, document.getElementById("today"), () => {
@@ -55,15 +65,15 @@ Api.backend.getMyGroups(myGroups => {
         if (tomorrow.length > 0) {
             const tomorrowCourses = {
                 "start": [
-                    tomorrow[0]
+                    validateCourse(tomorrow[0])
                 ],
                 "end": [
-                    tomorrow[tomorrow.length - 1]
+                    validateCourse(tomorrow[tomorrow.length - 1])
                 ]
             };
             new Template("tomorrow-courses", tomorrowCourses, document.getElementById("tomorrow"), () => {
             });
-        } else document.getElementById("tomorrow").outerHTML = "<h3>Vous n'avez pas cour demain</h3>"
+        } else document.getElementById("tomorrow").outerHTML = "<h3>Vous n'avez pas cours demain</h3>"
     }, err => {
         $('body')
             .toast({
