@@ -17,7 +17,7 @@ class Edt {
         if (!element.id)
             element.id = (Math.random() * 9992354).toString(36);
         this.id = element.id;
-        this.svg = this.#drawTable(element.id, lines, spacing, dayHeight, dayLength, margin, theme);
+        this.svg = this.drawTable(element.id, lines, spacing, dayHeight, dayLength, margin, theme);
     }
 
     /**
@@ -29,7 +29,7 @@ class Edt {
         for (let i = 0; i < document.getElementById(this.id).getElementsByTagName("svg").length; i++) {
             document.getElementById(this.id).removeChild(document.getElementById(this.id).getElementsByTagName("svg")[i]);
         }
-        this.svg = this.#drawTable(this.id, this.svg._lines, this.svg._spacing, this.svg._dayHeight, this.svg._dayLength, this.svg._margin, this.svg._theme);
+        this.svg = this.drawTable(this.id, this.svg._lines, this.svg._spacing, this.svg._dayHeight, this.svg._dayLength, this.svg._margin, this.svg._theme);
         const svg = document.getElementsByTagName("svg")[0];
         svg.removeAttribute('height');
         svg.setAttribute("width", "100%");
@@ -44,7 +44,7 @@ class Edt {
             const name = course.module? course.module: (course.description? course.description: (course.category? course.category: ""));
             const teacher = course.teacher? course.teacher: "";
             const location = course.room? course.room: "";
-            this.#drawCourse(this.svg, name, this.svg._days[start.getDay() - 1], start, end, teacher, location, this.#colorEvent(course.category, this.svg._theme));
+            this.drawCourse(this.svg, name, this.svg._days[start.getDay() - 1], start, end, teacher, location, this.colorEvent(course.category, this.svg._theme));
         });
         let panZoom;
         if(!UiCore.mobile && Edt.pcZoom)
@@ -92,7 +92,7 @@ class Edt {
      * @param event Event name
      * @param theme Theme
      */
-    #colorEvent(event, theme) {
+    colorEvent(event, theme) {
         switch (event) {
             case "TD": return theme.td
             case "TP": return theme.tp
@@ -114,7 +114,7 @@ class Edt {
      * @param margin Margin of days
      * @param theme Theme to be applied
      */
-    #drawTable(id, lines, spacing, dayHeight, dayLength, margin, theme) {
+    drawTable(id, lines, spacing, dayHeight, dayLength, margin, theme) {
         //23
         let days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
         let width = margin + 3.5 * 16 + dayLength * days.length + margin,
@@ -179,7 +179,7 @@ class Edt {
      * @param location Room of the course
      * @param color Color of the event
      */
-    #drawCourse(draw, name, day, start, end, teacher, location, color) {
+    drawCourse(draw, name, day, start, end, teacher, location, color) {
         let x1, x2;
         let i = draw._days.findIndex((element) => element === day);
         x1 = draw._margin + 3.5 * 16 + draw._dayLength * (i);
@@ -191,7 +191,7 @@ class Edt {
         let y1 = timeStart * draw._spacing + draw._margin + draw._dayHeight;
         let y2 = timeEnd * draw._spacing + draw._margin + draw._dayHeight;
         //i * spacing + margin + dayHeight
-        draw.rect(x2 - x1, y2 - y1).move(x1 + 0.1, y1).fill(this.#colorMixer(this.#hexToRgb(color), this.#hexToRgb(draw._theme.background), 0.2));
+        draw.rect(x2 - x1, y2 - y1).move(x1 + 0.1, y1).fill(this.colorMixer(this.hexToRgb(color), this.hexToRgb(draw._theme.background), 0.2));
         draw.line(x1, y1, x2, y1).stroke({
             width: 2,
             color: color
@@ -249,7 +249,7 @@ class Edt {
      * @param colorChannelB Color two
      * @param amountToMix Amount of the mixing
      */
-    #colorChannelMixer(colorChannelA, colorChannelB, amountToMix) {
+    colorChannelMixer(colorChannelA, colorChannelB, amountToMix) {
         const channelA = colorChannelA * amountToMix;
         const channelB = colorChannelB * (1 - amountToMix);
         return parseInt(channelA + channelB);
@@ -262,10 +262,10 @@ class Edt {
      * @param rgbB Array of color two
      * @param amountToMix Amount of the mixing
      */
-    #colorMixer(rgbA, rgbB, amountToMix) {
-        const r = this.#colorChannelMixer(rgbA[0], rgbB[0], amountToMix);
-        const g = this.#colorChannelMixer(rgbA[1], rgbB[1], amountToMix);
-        const b = this.#colorChannelMixer(rgbA[2], rgbB[2], amountToMix);
+    colorMixer(rgbA, rgbB, amountToMix) {
+        const r = this.colorChannelMixer(rgbA[0], rgbB[0], amountToMix);
+        const g = this.colorChannelMixer(rgbA[1], rgbB[1], amountToMix);
+        const b = this.colorChannelMixer(rgbA[2], rgbB[2], amountToMix);
         return "rgb(" + r + "," + g + "," + b + ")";
     }
 
@@ -274,7 +274,7 @@ class Edt {
      * @type {(hex: string) => number[] | null}
      * @param hex Hex color
      */
-    #hexToRgb(hex) {
+    hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? [
             parseInt(result[1], 16),

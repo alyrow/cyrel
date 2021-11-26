@@ -1,6 +1,6 @@
 class Api {
-    static #backend = null;
-    #rpc
+    static _backend = null;
+    rpc
 
     /**
      * Create the api to interact with the backend
@@ -9,7 +9,7 @@ class Api {
      * @param fatalError Function to be called on fatal error
      */
     constructor(url, fatalError) {
-        this.#rpc = simple_jsonrpc.connect_xhr(url, {
+        this.rpc = simple_jsonrpc.connect_xhr(url, {
             onerror: fatalError
         });
     }
@@ -19,7 +19,7 @@ class Api {
      * @type {() => Api}
      */
     static get backend() {
-        if (this.#backend === null) this.#backend = new Api("http://127.0.0.1:3030", e => {
+        if (Api._backend === null) this.backend = new Api("http://127.0.0.1:3030", e => {
             $('body')
                 .toast({
                     class: 'error',
@@ -27,7 +27,12 @@ class Api {
                 })
             ;
         });
-        return this.#backend;
+        return Api._backend;
+    }
+
+    static set backend(no) {
+        if (Api._backend !== null) console.error("Unexpected action blocked");
+        else Api._backend = no;
     }
 
     /**
@@ -39,7 +44,7 @@ class Api {
      * @param onFailure When the server rejects login infos
      */
     login(email, password, onSuccess, onFailure) {
-        this.#rpc.call("login", {email: email, password: password})
+        this.rpc.call("login", {email: email, password: password})
             .then(res => {
                 window.localStorage.setItem("__", res); //FIXME Big vulnerability
                 onSuccess();
@@ -57,7 +62,7 @@ class Api {
      * @param onFailure When the server rejects the user
      */
     register_1(ldap, department, email, onSuccess, onFailure) {
-        this.#rpc.call("register_1", {ldap: ldap, department: department, email: email})
+        this.rpc.call("register_1", {ldap: ldap, department: department, email: email})
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
@@ -70,7 +75,7 @@ class Api {
      * @param onFailure Check fail
      */
     register_2(hash, onSuccess, onFailure) {
-        this.#rpc.call("register_2", {hash: hash})
+        this.rpc.call("register_2", {hash: hash})
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
@@ -86,7 +91,7 @@ class Api {
      * @param onFailure Failed to register user
      */
     register_3(hash, firstname, lastname, password, onSuccess, onFailure) {
-        this.#rpc.call("register_3", {hash: hash, firstname: firstname, lastname: lastname, password: password})
+        this.rpc.call("register_3", {hash: hash, firstname: firstname, lastname: lastname, password: password})
             .then(res => onSuccess(res))
             .catch(err => onFailure(err));
     }
@@ -98,7 +103,7 @@ class Api {
      * @param onFailure When an error occur
      */
     isLogged(onSuccess, onFailure) {
-        this.#rpc.call("is_logged", {}, window.localStorage.getItem("__"))
+        this.rpc.call("is_logged", {}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
             .catch(err => {
                 onFailure(err);
@@ -115,7 +120,7 @@ class Api {
      * @param onFailure When an error occur
      */
     getSchedule(start, end, group, onSuccess, onFailure) {
-        this.#rpc.call("schedule_get", {start: start, end: end, group: group}, window.localStorage.getItem("__"))
+        this.rpc.call("schedule_get", {start: start, end: end, group: group}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
             .catch(err => {
                 onFailure(err);
@@ -131,7 +136,7 @@ class Api {
      * @param onFailure When an error occur
      */
     getAllGroups(onSuccess, onFailure) {
-        this.#rpc.call("all_groups_get", {}, window.localStorage.getItem("__"))
+        this.rpc.call("all_groups_get", {}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
             .catch(err => {
                 onFailure(err);
@@ -147,7 +152,7 @@ class Api {
      * @param onFailure When an error occur
      */
     getMyGroups(onSuccess, onFailure) {
-        this.#rpc.call("my_groups_get", {}, window.localStorage.getItem("__"))
+        this.rpc.call("my_groups_get", {}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
             .catch(err => {
                 onFailure(err);
@@ -164,7 +169,7 @@ class Api {
      * @param onFailure When an error occur
      */
     joinGroups(groups, onSuccess, onFailure) {
-        this.#rpc.call("groups_join", {groups: groups}, window.localStorage.getItem("__"))
+        this.rpc.call("groups_join", {groups: groups}, window.localStorage.getItem("__"))
             .then(res => onSuccess(res))
             .catch(err => {
                 onFailure(err);
