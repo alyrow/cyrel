@@ -210,6 +210,7 @@ class Edt {
         });
 
         draw.text(start.getHours() + "h" + (start.getMinutes() < 10 ? "0" : "") + start.getMinutes()).move(x1 + 3, y1 + 3).font("size", 13);
+        name = name.replace(new RegExp("\\[.*\\]"), "");
         let mat = draw.text(name).move(x1 + 6 * 7, y1 + 3).font("size", 14).font("weight", 1);
 
         do {
