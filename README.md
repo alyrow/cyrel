@@ -19,7 +19,7 @@ The backend is json-rpc server written in Rust. Its current functionalities are:
 - Assign groups to users
 - Get all groups
 - Get groups of a user
-- Get schedule (display and download)
+- Get schedule
 
 ## Frontend
 
