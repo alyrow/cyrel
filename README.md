@@ -2,7 +2,7 @@
 
 ![](./web/public/images/logos/cyrel_long-512.png)
 
-Cyrel is a website combined wih a frontend for the CY Cergy Paris Univertity's students.
+Cyrel is a website combined wih a frontend for the CY Cergy Paris University's students.
 
 It uses the university environment (Celcat) server Api's (not the admin API), to give various information, in particular
 the timetable.
