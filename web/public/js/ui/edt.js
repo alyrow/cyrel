@@ -396,6 +396,17 @@ class Edt {
     static get pcZoom() {
         return localStorage.getItem("zoom") === "1";
     }
+
+    static getWeekDates(date) {
+        let startDate = new Date(date);
+        startDate.setHours(0, 0, 0, 0);
+        let endDate = new Date(startDate);
+        const diffMonday = startDate.getDay() - 1;
+        const diffSaturday = 6 - endDate.getDay();
+        startDate.setHours(-24 * diffMonday);
+        endDate.setHours(24 * diffSaturday);
+        return {start: startDate, end: endDate};
+    }
 }
 
 let onSelect = () => {};
@@ -438,13 +449,8 @@ UiCore.registerTag("edt", element => {
                 today.setHours(-24 * (today.getDay() - 1));
                 onSelect = function(date) {
                     Edt.setEdtContainerState(Edt.edtContainerState.LOADING);
-                    let startDate = new Date(date);
-                    startDate.setHours(0, 0, 0, 0);
-                    let endDate = new Date(startDate);
-                    const diffMonday = startDate.getDay() - 1;
-                    const diffSaturday = 6 - endDate.getDay();
-                    startDate.setHours(-24 * diffMonday);
-                    endDate.setHours(24 * diffSaturday);
+                    let startDate = Edt.getWeekDates(date).start;
+                    let endDate = Edt.getWeekDates(date).end;
                     const isoDate = (iso_str) => {
                         if (iso_str.indexOf("Z") === iso_str.length - 1) return iso_str.slice(0, iso_str.length - 1);
                         else return iso_str;
@@ -555,8 +561,12 @@ $('.ui.modal').modal({
 
 document.getElementById("down-cancel").onclick = () => $('.ui.modal').modal("hide");
 document.getElementById("down-ok").onclick = () => {
+    let date = $('#calendar').calendar("get date");
+    if (!date) date = new Date();
+    let startDate = Edt.getWeekDates(date).start;
+    let endDate = Edt.getWeekDates(date).end;
     const a = document.createElement("a");
-    a.setAttribute("download", "edt.png");
+    a.setAttribute("download", "edt-"+[startDate.getDay(), startDate.getMonth(), endDate.getDay(), endDate.getMonth(), endDate.getFullYear()].join("-")+".png");
     a.setAttribute("href", document.getElementById("png").src);
     a.setAttribute("target", '_blank');
     a.click();
