@@ -34,3 +34,11 @@
 #logout:hover {
     color: rgba(255, 0, 0, 0.9);
 }
+
+.ui.inverted.dimmer {
+    background: rgba(0,0,0,.85) !important;
+}
+
+#edt-loader {
+    color: rgba(255,255,255,.9) !important;
+}
