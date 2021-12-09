@@ -24,3 +24,6 @@ wget -O ./public/dependencies/svg.min.js "$SVG"
 
 echo Downloading svg pan zoom lib...
 wget -O ./public/dependencies/svg-pan-zoom.min.js "$SVG_PAN_ZOOM"
+
+echo Downloading canvg lib...
+wget -O ./public/dependencies/umd.js "$CANVG"

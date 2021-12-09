@@ -1,6 +1,7 @@
 class Edt {
     svg;
     id;
+    trick = false;
 
     /**
      * Create a schedule
@@ -20,17 +21,20 @@ class Edt {
         this.svg = this.drawTable(element.id, lines, spacing, dayHeight, dayLength, margin, theme);
     }
 
+    static courses = []
+
     /**
      * Set the schedule
      * @type {(courses: any[]) => void}
      * @param courses Array of course
      */
     setEdt(courses) {
+        Edt.courses = courses;
         for (let i = 0; i < document.getElementById(this.id).getElementsByTagName("svg").length; i++) {
             document.getElementById(this.id).removeChild(document.getElementById(this.id).getElementsByTagName("svg")[i]);
         }
         this.svg = this.drawTable(this.id, this.svg._lines, this.svg._spacing, this.svg._dayHeight, this.svg._dayLength, this.svg._margin, this.svg._theme);
-        const svg = document.getElementsByTagName("svg")[0];
+        const svg = document.getElementById(this.id).getElementsByTagName("svg")[0];
         svg.removeAttribute('height');
         svg.setAttribute("width", "100%");
         if (!UiCore.mobile && Edt.pcZoom) {
@@ -47,7 +51,7 @@ class Edt {
             this.drawCourse(this.svg, name, this.svg._days[start.getDay() - 1], start, end, teacher, location, this.colorEvent(course.category, this.svg._theme));
         });
         let panZoom;
-        if(!UiCore.mobile && Edt.pcZoom)
+        if(!UiCore.mobile && Edt.pcZoom && !this.trick)
             panZoom = svgPanZoom(svg, {
                 controlIconsEnabled: false,
                 zoomEnabled: false,
@@ -161,7 +165,7 @@ class Edt {
             color: theme.primary
         });
         for (let i = 0; i < days.length; i++) {
-            draw.text(days[i]).move(margin + 3.5 * 16 + dayLength * i + dayLength / 2, margin + 16 - 1).font("anchor", "middle");
+            draw.text(days[i]).move(margin + 3.5 * 16 + dayLength * i + dayLength / 2, this.trick? -margin * 4.5 + 16 - 1: margin + 16 - 1).font("anchor", "middle").font("size", 18);
             draw.line(margin + 3.5 * 16 + dayLength * (i + 1), margin, margin + 3.5 * 16 + dayLength * (i + 1), (lines - 1) * spacing + margin + dayHeight).stroke({
                 width: 1,
                 color: theme.primary
@@ -174,7 +178,7 @@ class Edt {
                 width: 1,
                 color: !(i % 3) ? theme.primary : theme.secondary
             });
-            draw.text(heure.getHours() + "h" + heure.getMinutes() + (heure.getMinutes() === 0 ? "0" : "")).move(margin + 3, i * (spacing) + margin + 16 / 2 - 1 + dayHeight)
+            draw.text(heure.getHours() + "h" + heure.getMinutes() + (heure.getMinutes() === 0 ? "0" : "")).move(margin + 3, this.trick? i * (spacing) - margin * 4.5 + 16 / 2 - 1 + dayHeight: i * (spacing) + margin + 16 / 2 + 2 + dayHeight).font("size", 14);
             heure.setMinutes(heure.getMinutes() + 30);
         }
         draw.line(margin, (lines - 1) * spacing + margin + dayHeight, margin + 3.5 * 16 + dayLength * days.length, (lines - 1) * spacing + margin + dayHeight).stroke({
@@ -234,6 +238,11 @@ class Edt {
             width: 2,
             color: color
         });
+
+        if (this.trick) {
+            y1 = timeStart * draw._spacing - draw._margin * 4.5 + draw._dayHeight;
+            y2 = timeEnd * draw._spacing - draw._margin * 4.5 + draw._dayHeight;
+        }
 
         draw.text(start.getHours() + "h" + (start.getMinutes() < 10 ? "0" : "") + start.getMinutes()).move(x1 + 3, y1 + 3).font("size", 13);
         name = name.replace(new RegExp("\\[.*\\]"), "");
@@ -327,6 +336,18 @@ class Edt {
         "secondary": "#72767d",
         "text": "#dcddde",
         "background": "#1b1c1d",
+        "td": "#4A4AFF",
+        "cm": "#FF0000",
+        "tp": "#FE8BAD",
+        "exam": "#00FFFF",
+        "tiers": "#6FFFFF"
+    };
+
+    static discord = {
+        "primary": "#9ba1aa",
+        "secondary": "#72767d",
+        "text": "#dcddde",
+        "background": "#36393f",
         "td": "#4A4AFF",
         "cm": "#FF0000",
         "tp": "#FE8BAD",
@@ -476,3 +497,76 @@ UiCore.registerTag("edt", element => {
         });
 });
 
+UiCore.registerTag("edt-invisible", element => {
+element.style.display = "none";
+
+    const edt = new Edt(element, 23, 30, 45, 230, 1, UiCore.dark ? Edt.material_dark : Edt.material);
+    edt.trick = true;
+
+    const light = document.getElementById("l");
+    const dark = document.getElementById("n");
+    const discord = document.getElementById("d");
+
+    if (UiCore.dark)
+        dark.classList.add("active");
+    else light.classList.add("active");
+
+    window.updateInvisibleEdtAndDoSomeCrappyThings = () => {
+        edt.setEdt(Edt.courses);
+        const canvas = document.createElement("canvas");
+        canvas.width = edt.svg._width;
+        canvas.height = edt.svg._height;
+        const ctx = canvas.getContext("2d");
+        const cv = canvg.Canvg.fromString(ctx, edt.svg.svg());
+        cv.start();
+        const data = canvas.toDataURL("image/png");
+        cv.stop();
+        document.getElementById("png").src = data;
+    };
+
+    light.onclick = () => {
+        light.classList.add("active");
+        dark.classList.remove("active");
+        discord.classList.remove("active");
+        edt.svg._theme = Edt.material;
+        updateInvisibleEdtAndDoSomeCrappyThings();
+    };
+
+    dark.onclick = () => {
+        dark.classList.add("active");
+        light.classList.remove("active");
+        discord.classList.remove("active");
+        edt.svg._theme = Edt.material_dark;
+        updateInvisibleEdtAndDoSomeCrappyThings();
+    };
+
+    discord.onclick = () => {
+        discord.classList.add("active");
+        dark.classList.remove("active");
+        light.classList.remove("active");
+        edt.svg._theme = Edt.discord;
+        updateInvisibleEdtAndDoSomeCrappyThings();
+    };
+});
+
+$('.ui.modal').modal({
+    autofocus: false
+});
+
+document.getElementById("down-cancel").onclick = () => $('.ui.modal').modal("hide");
+document.getElementById("down-ok").onclick = () => {
+    const a = document.createElement("a");
+    a.setAttribute("download", "edt.png");
+    a.setAttribute("href", document.getElementById("png").src);
+    a.setAttribute("target", '_blank');
+    a.click();
+};
+
+const modal = document.getElementById("download");
+
+modal.onclick = () => {
+    modal.classList.add("loading");
+    updateInvisibleEdtAndDoSomeCrappyThings();
+    $('.ui.modal').modal("show");
+    modal.classList.remove("loading");
+};

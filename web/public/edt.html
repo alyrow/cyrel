@@ -17,6 +17,7 @@
     <script src="dependencies/semantic/dist/semantic.min.js"></script>
     <script src="dependencies/svg.min.js"></script>
     <script src="dependencies/svg-pan-zoom.min.js"></script>
+    <script src="dependencies/umd.js"></script>
 
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <script src="js/ui/ui-core.js"></script>
@@ -30,7 +31,7 @@
 
     <p></p>
 
-    <div class="ui selection dropdown">
+    <div class="ui selection dropdown" style="margin-right: 12px;">
         <input type="hidden" name="group">
         <i class="dropdown icon"></i>
         <div class="default text">Groupe</div>
@@ -46,12 +47,43 @@
             <label>Zoom pour PC</label>
         </div>
     </div>
+
+    <div id="download" class="ui icon button" style="margin-top: 12px;">
+        <i class="download icon"></i>
+    </div>
 </div>
 
 <div class="ui container segment">
     <edt></edt>
     <div id="edt-dimmer" class="ui active dimmer">
         <div id="edt-loader" class="ui loader"></div>
+    </div>
+</div>
+
+<edt-invisible></edt-invisible>
+
+<div class="ui large modal">
+    <div class="header">
+        Télécharger l'emploi du temps
+    </div>
+
+    <div class="ui two column stackable grid" style="padding: 1.25rem 1.5rem;">
+        <div class="column" style="width: 80%">
+            <img id="png" alt="edt" src="" style="width: 100%;">
+        </div>
+        <div class="column" style="width: 20%">
+            <h4 class="ui header">Thème</h4>
+            <div class="ui icon buttons">
+                <button id="l" class="ui button"><i class="sun icon"></i></button>
+                <button id="n" class="ui button"><i class="moon icon"></i></button>
+                <button id="d" class="ui button"><i class="discord icon"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <div id="down-cancel" class="ui button">Annuler</div>
+        <div id="down-ok" class="ui positive button">Télécharger</div>
     </div>
 </div>
 
