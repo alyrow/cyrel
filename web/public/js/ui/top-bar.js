@@ -7,8 +7,8 @@ class TopBar {
      */
     constructor(element, title, pagesConf) {
         let thisPage = null;
-        var xDown = null;                                                        
-        var yDown = null;
+        let xDown = null;                                                        
+        let yDown = null;
 
         pagesConf.forEach(page => {
             if (document.location.pathname.indexOf(page.url) === 0 || (page.url.indexOf("/index.html") !== -1 &&
