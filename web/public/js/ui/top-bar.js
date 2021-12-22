@@ -60,7 +60,7 @@ class TopBar {
         }, element, () => {
             if (thisPage && thisPage.menu) {
                 $('.ui.left.vertical.menu.sidebar').first()
-                    .sidebar('attach events', '.sidebar.icon', '.touchmove')
+                    .sidebar('attach events', '.sidebar.icon')
                     .sidebar('setting', 'transition', 'overlay')
                 ;
             }
