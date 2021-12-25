@@ -182,7 +182,7 @@ class Api {
         const needLogin = document.querySelector('meta[name="logged"]').content === "1";
         if (!needLogin) return;
         const act = () => {
-            //document.location.href = "/login.html";
+            document.location.href = "/login.html";
         };
 
         if (!window.localStorage.getItem("__")) {
