@@ -1,8 +1,8 @@
 # CYREL
 
-![](./web/public/images/logos/cyrel_long-512.png)
+![](./cyrel_long-512.png)
 
-Cyrel is a website combined wih a frontend for the CY Cergy Paris University's students.
+Cyrel is a backend for the CY Cergy Paris University's students.
 
 It uses the university environment (Celcat) server Api's (not the admin API), to give various information, in particular
 the timetable.
@@ -21,9 +21,11 @@ The backend is json-rpc server written in Rust. Its current functionalities are:
 - Get groups of a user
 - Get schedule
 
-## Frontend
+## Frontends
 
-The frontend is written in html and plain javascript and take advantage of all backend's functionalities.
+| **Name**                                         | **Description** |
+|--------------------------------------------------|-----------------|
+| [cyrel-web](https://github.com/alyrow/cyrel-web) | Web frontend    |
 
 &nbsp;
 
