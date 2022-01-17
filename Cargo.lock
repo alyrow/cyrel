@@ -338,31 +338,24 @@ dependencies = [
  "config",
  "dotenv",
  "futures",
- "html-escape",
  "jsonrpc-core",
  "jsonrpc-derive",
  "jsonrpc-http-server",
  "jsonwebtoken",
  "lazy_static",
  "lettre",
- "log",
- "num-derive",
- "num-traits 0.2.14",
  "once_cell",
  "pbkdf2",
  "rand",
  "regex",
- "reqwest",
  "serde 1.0.133",
  "serde_json",
- "serde_repr",
  "sqlx",
  "thiserror",
  "tokio",
  "tracing",
  "tracing-subscriber",
  "uuid",
- "void",
 ]
 
 [[package]]
@@ -374,7 +367,6 @@ dependencies = [
  "cy-celcat",
  "dotenv",
  "futures",
- "log",
  "sqlx",
  "tokio",
  "tracing",
@@ -694,15 +686,6 @@ dependencies = [
  "libc",
  "match_cfg",
  "winapi",
-]
-
-[[package]]
-name = "html-escape"
-version = "0.2.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "816ea801a95538fc5f53c836697b3f8b64a9d664c4f0b91efe1fe7c92e4dbcb7"
-dependencies = [
- "utf8-width",
 ]
 
 [[package]]
@@ -1123,17 +1106,6 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits 0.2.14",
-]
-
-[[package]]
-name = "num-derive"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -1643,17 +1615,6 @@ dependencies = [
  "itoa 1.0.1",
  "ryu",
  "serde 1.0.133",
-]
-
-[[package]]
-name = "serde_repr"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98d0516900518c29efa217c298fa1f4e6c6ffc85ae29fd7f4ee48f176e1a9ed5"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -2303,12 +2264,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "utf8-width"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cf7d77f457ef8dfa11e4cd5933c5ddb5dc52a94664071951219a97710f0a32b"
-
-[[package]]
 name = "uuid"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2334,12 +2289,6 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
-
-[[package]]
-name = "void"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 
 [[package]]
 name = "want"
