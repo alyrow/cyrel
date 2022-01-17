@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::env;
 
 use anyhow::{anyhow, Context};
@@ -14,17 +15,25 @@ use chrono::naive::NaiveDate;
 use dotenv::dotenv;
 use futures::future::try_join_all;
 use sqlx::postgres::PgPool;
-use tracing::error;
+use tokio::sync::{mpsc, oneshot, Mutex};
+use tracing::{error, warn};
 use tracing_subscriber::EnvFilter;
+
+struct State {
+    pool: PgPool,
+    celcat: Celcat,
+}
+
+type Message = (Course, oneshot::Sender<()>);
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let _ = dotenv();
+
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .try_init()
         .map_err(|e| anyhow!(e))?;
-
-    let _ = dotenv();
 
     let pool = PgPool::connect(&env::var("DATABASE_URL")?)
         .await
@@ -39,25 +48,36 @@ async fn main() -> anyhow::Result<()> {
         c
     };
 
-    update_students(&pool, &celcat)
+    let state: &_ = Box::leak(Box::new(State { pool, celcat }));
+
+    update_students(&state)
         .await
         .context("Failed to update student list")?;
 
-    let gr = get_group_referents(&pool)
+    let gr = get_group_referents(&state.pool)
         .await
         .context("Failed to get groups referents")?;
+
+    let (tx, rx) = mpsc::channel(100);
+
+    let handle = tokio::spawn(async move { event_updater(state, rx).await });
+
     try_join_all(
         gr.into_iter()
-            .map(|(g, r)| update_courses(&pool, &celcat, g, r)),
+            .map(|(g, r)| update_courses(&state, g, r, tx.clone())),
     )
     .await
     .context("Failed to update courses")?;
 
+    drop(tx);
+    handle.await?;
+
     Ok(())
 }
 
-async fn update_students(pool: &PgPool, celcat: &Celcat) -> anyhow::Result<()> {
-    let students: ResourceList<Student> = celcat
+async fn update_students(state: &State) -> anyhow::Result<()> {
+    let students: ResourceList<Student> = state
+        .celcat
         .fetch(ResourceListRequest {
             my_resources: false,
             search_term: "__".to_owned(),
@@ -67,7 +87,7 @@ async fn update_students(pool: &PgPool, celcat: &Celcat) -> anyhow::Result<()> {
         })
         .await?;
 
-    let mut tx = pool.begin().await?;
+    let mut tx = state.pool.begin().await?;
     for s in students.results {
         let (firstname, lastname) = separate_names(&s.text)?;
         sqlx::query!(
@@ -117,12 +137,13 @@ WHERE referent IS NOT NULL
 }
 
 async fn update_courses(
-    pool: &PgPool,
-    celcat: &Celcat,
+    state: &State,
     group: i32,
     referent: StudentId,
+    s: mpsc::Sender<Message>,
 ) -> anyhow::Result<()> {
-    let calendar: CalendarData<Student> = celcat
+    let calendar: CalendarData<Student> = state
+        .celcat
         .fetch(CalendarDataRequest {
             start: NaiveDate::from_ymd(2021, 9, 1).and_hms(0, 0, 0),
             end: NaiveDate::from_ymd(2022, 9, 1).and_hms(0, 0, 0),
@@ -133,6 +154,8 @@ async fn update_courses(
         })
         .await?;
 
+    let mut tx = state.pool.begin().await?;
+
     sqlx::query!(
         r#"
 DELETE FROM groups_courses
@@ -140,28 +163,71 @@ WHERE group_id = $1
         "#,
         group
     )
-    .execute(pool)
+    .execute(&mut tx)
     .await?;
+
+    let tx = Mutex::new(tx);
 
     try_join_all(
         calendar
             .courses
             .iter()
-            .map(|c| update_course(pool, celcat, group, c)),
+            .map(|c| update_course(&tx, group, c, s.clone())),
     )
     .await
     .with_context(|| format!("Failed to update courses for group {}", group))?;
+
+    tx.into_inner().commit().await?;
 
     Ok(())
 }
 
 async fn update_course(
-    pool: &PgPool,
-    celcat: &Celcat,
+    tx: &Mutex<sqlx::Transaction<'static, sqlx::Postgres>>,
     group: i32,
     course: &Course,
+    s: mpsc::Sender<Message>,
 ) -> anyhow::Result<()> {
-    let event: Event = match celcat
+    let (otx, orx) = oneshot::channel();
+    s.send((course.clone(), otx)).await?;
+    if let Err(_) = orx.await {
+        return Err(anyhow!("Failed to update side bar event"));
+    }
+
+    let mut tx = tx.lock().await;
+    sqlx::query!(
+        r#"
+INSERT INTO groups_courses (group_id, course_id)
+VALUES ( $1, $2 )
+        "#,
+        group,
+        course.id.0
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    Ok(())
+}
+
+async fn event_updater(state: &State, mut rx: mpsc::Receiver<(Course, oneshot::Sender<()>)>) {
+    let already_updated = HashSet::<String>::new();
+
+    while let Some((c, s)) = rx.recv().await {
+        if !already_updated.contains(&c.id.0) {
+            if let Err(err) = update_event(state, c).await {
+                error!("Failed to update side bar event: {}", err);
+                continue;
+            }
+        }
+        if let Err(_) = s.send(()) {
+            warn!("The receiver dropped");
+        }
+    }
+}
+
+async fn update_event(state: &State, course: Course) -> anyhow::Result<()> {
+    let event: Event = match state
+        .celcat
         .fetch(EventRequest {
             event_id: course.id.clone(),
         })
@@ -205,7 +271,6 @@ async fn update_course(
         }
     }
 
-    let mut tx = pool.begin().await?;
     sqlx::query!(
         r#"
 INSERT INTO courses
@@ -245,20 +310,8 @@ SET ( start_time
         teacher,
         description
     )
-    .execute(&mut tx)
+    .execute(&state.pool)
     .await?;
-
-    sqlx::query!(
-        r#"
-INSERT INTO groups_courses (group_id, course_id)
-VALUES ( $1, $2 )
-        "#,
-        group,
-        course.id.0
-    )
-    .execute(&mut tx)
-    .await?;
-    tx.commit().await?;
 
     Ok(())
 }
