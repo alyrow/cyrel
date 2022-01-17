@@ -2,7 +2,7 @@
 name = "cyrel-sync"
 version = "0.1.0"
 authors = ["Lucas Ransan <lucas@ransan.tk", "alyrow"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
