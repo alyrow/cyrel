@@ -4,12 +4,12 @@ use chrono::NaiveDateTime;
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use jsonwebtoken::errors::Error;
-use log::{error, info, warn};
 use once_cell::sync::OnceCell;
 use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
 use pbkdf2::Pbkdf2;
 use rand::prelude::StdRng;
 use sqlx::PgPool;
+use tracing::{error, info, warn};
 
 use crate::authentication::{CheckUser, Claims, HashFunction, Meta, Register};
 use crate::db::Db;
@@ -327,8 +327,8 @@ impl Rpc for RpcImpl {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             return match user {
                 Some(_) => Ok(true),
-                None => Ok(false)
-            }
+                None => Ok(false),
+            };
         })
     }
 

@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use jsonrpc_core::Metadata;
 use jsonrpc_http_server::Rpc;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
-use log::{error, info, warn};
 use pbkdf2::password_hash::{PasswordHasher, Salt};
 use pbkdf2::Pbkdf2;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use tracing::{error, info, warn};
 
 use crate::db::Db;
 use crate::models::User;

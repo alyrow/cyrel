@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
-use log::{error, info, warn};
 use sqlx::PgPool;
+use tracing::{error, info, warn};
 
 use crate::models::{Department, Group, User};
 use crate::rpc::RpcError;

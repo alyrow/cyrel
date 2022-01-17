@@ -5,7 +5,7 @@ use self::lettre::transport::smtp::response::Response;
 use crate::SETTINGS;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
-use log::{error, info, warn};
+use tracing::{error, info, warn};
 
 pub struct Email {}
 

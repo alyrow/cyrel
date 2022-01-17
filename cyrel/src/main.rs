@@ -9,13 +9,15 @@ mod settings;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
+use anyhow::anyhow;
 use clap::{clap_app, crate_authors, crate_description, crate_name, crate_version, ArgMatches};
 use dotenv::dotenv;
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
 use lazy_static::lazy_static;
-use log::{debug, info, trace};
 use rand::prelude::*;
+use tracing::{debug, info, trace};
+use tracing_subscriber::EnvFilter;
 
 use crate::authentication::Meta;
 use crate::rpc::{gen_server::Rpc, RpcImpl};
@@ -37,8 +39,12 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenv().ok();
-    env_logger::init();
+    let _ = dotenv();
+
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .try_init()
+        .map_err(|e| anyhow!(e))?;
 
     lazy_static::initialize(&CLI);
     lazy_static::initialize(&SETTINGS);
