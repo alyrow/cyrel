@@ -13,12 +13,17 @@ use celcat::{
 use chrono::naive::NaiveDate;
 use dotenv::dotenv;
 use futures::future::try_join_all;
-use log::error;
 use sqlx::postgres::PgPool;
+use tracing::error;
+use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .try_init()
+        .map_err(|e| anyhow!(e))?;
+
     let _ = dotenv();
 
     let pool = PgPool::connect(&env::var("DATABASE_URL")?)
