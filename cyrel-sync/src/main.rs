@@ -209,19 +209,22 @@ VALUES ( $1, $2 )
     Ok(())
 }
 
-async fn event_updater(state: &State, mut rx: mpsc::Receiver<(Course, oneshot::Sender<()>)>) {
+async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
     let already_updated = HashSet::<String>::new();
 
     while let Some((c, s)) = rx.recv().await {
-        if !already_updated.contains(&c.id.0) {
-            if let Err(err) = update_event(state, c).await {
-                error!("Failed to update side bar event: {}", err);
-                continue;
+        let updated = already_updated.contains(&c.id.0);
+        tokio::spawn(async move {
+            if !updated {
+                if let Err(err) = update_event(state, c).await {
+                    error!("Failed to update side bar event: {}", err);
+                    return;
+                }
             }
-        }
-        if let Err(_) = s.send(()) {
-            warn!("The receiver dropped");
-        }
+            if let Err(_) = s.send(()) {
+                warn!("The receiver dropped");
+            }            
+        });
     }
 }
 
