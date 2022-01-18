@@ -223,7 +223,7 @@ async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
             }
             if let Err(_) = s.send(()) {
                 warn!("The receiver dropped");
-            }            
+            }
         });
     }
 }
