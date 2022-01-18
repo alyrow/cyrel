@@ -210,10 +210,10 @@ VALUES ( $1, $2 )
 }
 
 async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
-    let already_updated = HashSet::<String>::new();
+    let mut already_updated = HashSet::<String>::new();
 
     while let Some((c, s)) = rx.recv().await {
-        let updated = already_updated.contains(&c.id.0);
+        let updated = already_updated.insert(c.id.0.clone());
         tokio::spawn(async move {
             if !updated {
                 if let Err(err) = update_event(state, c).await {
