@@ -1,7 +1,5 @@
-mod wait;
-
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::env;
 
 use anyhow::{anyhow, Context};
@@ -21,8 +19,6 @@ use sqlx::postgres::PgPool;
 use tokio::sync::{mpsc, oneshot, Mutex};
 use tracing::{error, warn};
 use tracing_subscriber::EnvFilter;
-
-use crate::wait::Wait;
 
 struct State {
     pool: PgPool,
@@ -215,32 +211,29 @@ VALUES ( $1, $2 )
 }
 
 async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
-    let mut already_updated = HashMap::<String, Arc<Wait>>::new();
+    let mut already_updated = HashMap::<String, Arc<RwLock<()>>>::new();
 
     while let Some((c, s)) = rx.recv().await {
-        let (updated, wait) = {
-            if let Some(wait) = already_updated.get(&c.id.0) {
-                (true, Arc::clone(wait))
-            } else {
-                let wait = Arc::new(Wait::new());
-                already_updated.insert(c.id.0.clone(), Arc::clone(&wait));
-                (false, wait)
-            }
-        };
-        tokio::spawn(async move {
-            if updated {
-                wait.wait();
-            } else {
-                wait.update();
+        if let Some(lock) = already_updated.get(&c.id.0) {
+            let lock = Arc::clone(lock);
+            tokio::spawn(async move {
+                let _ = lock.read().unwrap();
+                if let Err(_) = s.send(()) {
+                    warn!("The receiver dropped");
+                }
+            });
+        } else {
+            let lock = Arc::new(RwLock::new(()));
+            let pending = lock.write().unwrap();
+            already_updated.insert(c.id.0.clone(), Arc::clone(&lock));
+            tokio::spawn(async move {
+                let _ = pending;
                 if let Err(err) = update_event(state, c).await {
                     error!("Failed to update side bar event: {}", err);
                     return;
                 }
-            }
-            if let Err(_) = s.send(()) {
-                warn!("The receiver dropped");
-            }
-        });
+            });
+        }
     }
 }
 
