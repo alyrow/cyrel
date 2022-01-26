@@ -232,6 +232,9 @@ async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
                     error!("Failed to update side bar event: {}", err);
                     return;
                 }
+                if let Err(_) = s.send(()) {
+                    warn!("The receiver dropped");
+                }
             });
         }
     }
