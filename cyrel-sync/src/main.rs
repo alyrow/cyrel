@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::env;
 
 use anyhow::{anyhow, Context};
@@ -16,7 +16,7 @@ use chrono::naive::NaiveDate;
 use dotenv::dotenv;
 use futures::future::try_join_all;
 use sqlx::postgres::PgPool;
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
 use tracing::{error, warn};
 use tracing_subscriber::EnvFilter;
 
@@ -217,21 +217,21 @@ async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
         if let Some(lock) = already_updated.get(&c.id.0) {
             let lock = Arc::clone(lock);
             tokio::spawn(async move {
-                let _ = lock.read().unwrap();
+                lock.read().await;
                 if let Err(_) = s.send(()) {
                     warn!("The receiver dropped");
                 }
             });
         } else {
             let lock = Arc::new(RwLock::new(()));
-            let pending = lock.write().unwrap();
-            already_updated.insert(c.id.0.clone(), Arc::clone(&lock));
+            let pending = Arc::clone(&lock).write_owned().await;
+            already_updated.insert(c.id.0.clone(), lock);
             tokio::spawn(async move {
-                let _ = pending;
                 if let Err(err) = update_event(state, c).await {
                     error!("Failed to update side bar event: {}", err);
                     return;
                 }
+                drop(pending);
                 if let Err(_) = s.send(()) {
                     warn!("The receiver dropped");
                 }
