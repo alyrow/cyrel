@@ -364,19 +364,38 @@ WHERE client_id = $1 AND user_id = $2
         };
 
         let mut tx = pool.begin().await?;
-        let _ = sqlx::query!(
+
+        let result = Db::get_client_user_config(pool, client_id, user.id).await;
+        match result {
+            Ok(_) => {
+                let _ = sqlx::query!(
+                    r#"
+UPDATE clients_users_config
+SET config = $3
+WHERE client_id = $1 AND user_id = $2
+                "#,
+                    client_id,
+                    user.id,
+                    config
+                )
+                    .execute(&mut tx)
+                    .await?;
+            },
+            Err(_) => {
+                let _ = sqlx::query!(
             r#"
 INSERT INTO clients_users_config (client_id, user_id, config)
 VALUES ($1, $2, $3)
-        "#,
-            client_id,
-            user.id,
-            config
-        )
-            .execute(&mut tx)
-            .await?;
+                "#,
+                    client_id,
+                    user.id,
+                    config
+                )
+                    .execute(&mut tx)
+                    .await?;
+            }
+        }
         tx.commit().await?;
-
 
         Ok(())
     }
