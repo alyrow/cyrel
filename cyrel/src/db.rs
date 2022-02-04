@@ -305,4 +305,79 @@ WHERE id = $1
 
         Ok(courses)
     }
+
+    pub async fn is_client_exist(
+        pool: &PgPool,
+        client_id: i32,
+    ) -> anyhow::Result<()> {
+        let _ = sqlx::query!(
+            r#"
+SELECT id, name
+FROM clients
+WHERE id = $1
+        "#,
+            client_id
+        )
+            .fetch_one(pool)
+            .await?;
+
+
+        Ok(())
+    }
+
+    pub async fn get_client_user_config(
+        pool: &PgPool,
+        client_id: i32,
+        user_id: i64,
+    ) -> anyhow::Result<Option<String>> {
+        let config = sqlx::query!(
+            r#"
+SELECT config
+FROM clients_users_config
+WHERE client_id = $1 AND user_id = $2
+        "#,
+            client_id,
+            user_id
+        )
+            .fetch_one(pool)
+            .await?;
+
+
+        Ok(config.config)
+    }
+
+    pub async fn set_client_user_config(
+        pool: &PgPool,
+        client_id: i32,
+        user_id: i64,
+        config: String,
+    ) -> anyhow::Result<()> {
+        let user: User = {
+            let result = Db::match_user_by_id(pool, user_id).await;
+            match result {
+                Ok(user) => user,
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    return Err(RpcError::Unimplemented.into());
+                }
+            }
+        };
+
+        let mut tx = pool.begin().await?;
+        let _ = sqlx::query!(
+            r#"
+INSERT INTO clients_users_config (client_id, user_id, config)
+VALUES ($1, $2, $3)
+        "#,
+            client_id,
+            user.id,
+            config
+        )
+            .execute(&mut tx)
+            .await?;
+        tx.commit().await?;
+
+
+        Ok(())
+    }
 }

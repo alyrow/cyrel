@@ -78,6 +78,21 @@ pub trait Rpc {
         end: NaiveDateTime,
         group: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>>;
+
+    #[rpc(meta, name = "client_configs_get", params = "named")]
+    fn client_configs_get(
+        &self,
+        meta: Self::Metadata,
+        client_id: i32,
+    ) -> BoxFuture<jsonrpc_core::Result<Option<String>>>;
+
+    #[rpc(meta, name = "client_configs_set", params = "named")]
+    fn client_configs_set(
+        &self,
+        meta: Self::Metadata,
+        client_id: i32,
+        config: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>>;
 }
 
 pub struct RpcImpl {
@@ -426,6 +441,54 @@ impl Rpc for RpcImpl {
             return match get_courses {
                 Ok(courses) => Ok(courses),
                 Err(_) => Err(RpcError::Unimplemented.into()),
+            };
+        })
+    }
+
+    fn client_configs_get(&self, meta: Self::Metadata, client_id: i32) -> BoxFuture<jsonrpc_core::Result<Option<String>>> {
+        Box::pin(async move {
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            if user.is_none() {
+                return Err(RpcError::IncorrectLoginInfo.into());
+            }
+            let user = user.unwrap();
+
+            let is_client_exist =
+                Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
+            match is_client_exist {
+                Ok(_) => {},
+                Err(_) => return Err(RpcError::UnknownClient.into()),
+            };
+
+            let get_config =
+                Db::get_client_user_config(RpcImpl::get_postgres(), client_id, user.id).await;
+            return match get_config {
+                Ok(config) => Ok(config),
+                Err(_) => Ok(None),
+            };
+        })
+    }
+
+    fn client_configs_set(&self, meta: Self::Metadata, client_id: i32, config: String) -> BoxFuture<jsonrpc_core::Result<String>> {
+        Box::pin(async move {
+            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            if user.is_none() {
+                return Err(RpcError::IncorrectLoginInfo.into());
+            }
+            let user = user.unwrap();
+
+            let is_client_exist =
+                Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
+            match is_client_exist {
+                Ok(_) => {},
+                Err(_) => return Err(RpcError::UnknownClient.into()),
+            };
+
+            let set_config =
+                Db::set_client_user_config(RpcImpl::get_postgres(), client_id, user.id, config).await;
+            return match set_config {
+                Ok(_) => Ok("Success!".parse().unwrap()),
+                Err(_) => Err(RpcError::UnknownError.into()),
             };
         })
     }
