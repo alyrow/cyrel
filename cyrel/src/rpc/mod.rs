@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use jsonwebtoken::errors::Error;
@@ -30,6 +30,9 @@ pub trait Rpc {
 
     #[rpc(name = "ping")]
     fn ping(&self) -> jsonrpc_core::Result<String>;
+
+    #[rpc(name = "time")]
+    fn time(&self) -> jsonrpc_core::Result<NaiveDateTime>;
 
     #[rpc(name = "login", params = "named")]
     fn login(&self, email: String, password: String) -> BoxFuture<jsonrpc_core::Result<String>>;
@@ -162,6 +165,11 @@ impl Rpc for RpcImpl {
     fn ping(&self) -> jsonrpc_core::Result<String> {
         info!("pinged");
         Ok("pong".to_owned())
+    }
+
+    fn time(&self) -> jsonrpc_core::Result<NaiveDateTime> {
+        info!("time");
+        Ok(Utc::now().naive_utc())
     }
 
     fn login(&self, email: String, password: String) -> BoxFuture<jsonrpc_core::Result<String>> {
