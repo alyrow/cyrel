@@ -16,6 +16,32 @@
       "nullable": []
     }
   },
+  "1b30325fabb52458367f8efe2a96697fea1d90c73b59b45084e2cf7de2829c64": {
+    "query": "\nSELECT id, name\nFROM clients\nWHERE id = $1\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
   "22a5283cea91d904068cc3202bd3ba7f4b8964d61423d90992def8d4a7466071": {
     "query": "\nSELECT course_id\nFROM groups_courses\nWHERE group_id = $1\n        ",
     "describe": {
@@ -34,6 +60,20 @@
       "nullable": [
         false
       ]
+    }
+  },
+  "2a3b4c463e504a7ab3c21e0fa50d28c2dcc586c0a1158ef1ce913b861f5fc6de": {
+    "query": "\nUPDATE clients_users_config\nSET config = $3\nWHERE client_id = $1 AND user_id = $2\n                ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": []
     }
   },
   "2dc8afdf3ae100a9eb4e73643af74c85c567e9710f06e96fb0ec2feefb48604f": {
@@ -384,6 +424,20 @@
       ]
     }
   },
+  "c646ea37ff478b23cb3936d5b8f69457486f80023b745b174a9cdebab7bf38c7": {
+    "query": "\nINSERT INTO clients_users_config (client_id, user_id, config)\nVALUES ($1, $2, $3)\n                ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "d1bca21b309317b36d5721d78ace36a8bb494b638139d951e9ed67e61ec35be1": {
     "query": "\nINSERT INTO users_groups (user_id, group_id)\nVALUES ($1, $2)\n        ",
     "describe": {
@@ -395,6 +449,27 @@
         ]
       },
       "nullable": []
+    }
+  },
+  "f44e752d732675a57ce81808e26ecd98b7ab174d4ee24bb4d023a0242383cf99": {
+    "query": "\nSELECT config\nFROM clients_users_config\nWHERE client_id = $1 AND user_id = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "config",
+          "type_info": "Text"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        true
+      ]
     }
   }
 }
