@@ -17,6 +17,9 @@ pub enum RpcError {
     #[error("the department supplied is unknown")]
     UnknownDepartment = 5,
 
+    #[error("the client supplied is unknown")]
+    UnknownClient = 6,
+
     #[error("unimplemented")]
     Unimplemented = 2,
 }
