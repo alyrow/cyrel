@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 use std::env;
 use std::sync::Arc;
 
@@ -16,6 +16,7 @@ use dotenv::dotenv;
 use futures::future::try_join_all;
 use sqlx::postgres::PgPool;
 use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
+use tokio_retry::{Retry, strategy::ExponentialBackoff};
 use tracing::{error, warn};
 use tracing_subscriber::EnvFilter;
 
@@ -186,8 +187,13 @@ async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
             let lock = Arc::new(RwLock::new(()));
             let pending = Arc::clone(&lock).write_owned().await;
             already_updated.insert(c.id.0.clone(), lock);
+
             tokio::spawn(async move {
-                if let Err(err) = update_event(state, c).await {
+                let strategy = ExponentialBackoff::from_millis(100)
+                    .max_delay(Duration::from_secs(60));
+
+                let updated = Retry::spawn(strategy, || update_event(state, c.clone())).await;
+                if let Err(err) = updated {
                     error!("Failed to update side bar event: {}", err);
                     return;
                 }

@@ -12,5 +12,6 @@ dotenv = "0.15"
 futures = "0.3"
 sqlx = { version = "0.5", features = ["runtime-tokio-native-tls", "postgres", "chrono", "json", "offline"] }
 tokio = { version = "1", features = ["full"] }
+tokio-retry = "0.3"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
