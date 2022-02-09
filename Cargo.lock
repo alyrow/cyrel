@@ -313,9 +313,9 @@ dependencies = [
 
 [[package]]
 name = "cy-celcat"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d95d95b52b0498d4515b4f918fe9112449934e336935c63aac47b76f1a955d67"
+checksum = "8fc5e708e183cef0cd199a3d93618b27160b482c39a1ff920b15c12cc6fb9542"
 dependencies = [
  "chrono",
  "lazy_static",
