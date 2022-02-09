@@ -13,7 +13,7 @@ use celcat::{
 };
 use chrono::naive::NaiveDate;
 use dotenv::dotenv;
-use futures::future::try_join_all;
+use futures::future::{join_all, try_join_all};
 use sqlx::postgres::PgPool;
 use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
 use tokio_retry::{Retry, strategy::ExponentialBackoff};
@@ -59,12 +59,15 @@ async fn main() -> anyhow::Result<()> {
 
     let handle = tokio::spawn(async move { event_updater(state, rx).await });
 
-    try_join_all(
+    join_all(
         gr.into_iter()
-            .map(|(g, r)| update_courses(&state, g, r, tx.clone())),
+            .map(|(g, r)| async move {
+                if let Err(err) = update_courses(&state, g, r, tx.clone()).await {
+                    error!("Failed to update courses: {}", err);
+                }
+            }),
     )
-    .await
-    .context("Failed to update courses")?;
+    .await;
 
     drop(tx);
     handle.await?;
