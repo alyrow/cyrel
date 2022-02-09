@@ -56,13 +56,14 @@ async fn main() -> anyhow::Result<()> {
         .context("Failed to get groups referents")?;
 
     let (tx, rx) = mpsc::channel(100);
+    let tx_ref = &tx;
 
     let handle = tokio::spawn(async move { event_updater(state, rx).await });
 
     join_all(
         gr.into_iter()
             .map(|(g, r)| async move {
-                if let Err(err) = update_courses(&state, g, r, tx.clone()).await {
+                if let Err(err) = update_courses(&state, g, r, tx_ref.clone()).await {
                     error!("Failed to update courses: {}", err);
                 }
             }),
