@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::env;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Context};
 use celcat::{
@@ -9,7 +9,6 @@ use celcat::{
     fetchable::{
         calendar::{CalView, CalendarData, CalendarDataRequest, Course},
         event::{Element, Event, EventRequest, RawElement},
-        resources::{ResourceList, ResourceListRequest},
     },
 };
 use chrono::naive::NaiveDate;
@@ -51,10 +50,6 @@ async fn main() -> anyhow::Result<()> {
 
     let state: &_ = Box::leak(Box::new(State { pool, celcat }));
 
-    update_students(&state)
-        .await
-        .context("Failed to update student list")?;
-
     let gr = get_group_referents(&state.pool)
         .await
         .context("Failed to get groups referents")?;
@@ -72,41 +67,6 @@ async fn main() -> anyhow::Result<()> {
 
     drop(tx);
     handle.await?;
-
-    Ok(())
-}
-
-async fn update_students(state: &State) -> anyhow::Result<()> {
-    let students: ResourceList<Student> = state
-        .celcat
-        .fetch(ResourceListRequest {
-            my_resources: false,
-            search_term: "__".to_owned(),
-            page_size: 1000000,
-            page_number: 0,
-            res_type: Student,
-        })
-        .await?;
-
-    let mut tx = state.pool.begin().await?;
-    for s in students.results {
-        let (firstname, lastname) = separate_names(&s.text)?;
-        sqlx::query!(
-            r#"
-INSERT INTO celcat_students (id, firstname, lastname, department)
-VALUES ( $1, $2, $3, $4 )
-ON CONFLICT (id) DO UPDATE
-SET (firstname, lastname, department) = (EXCLUDED.firstname, EXCLUDED.lastname, EXCLUDED.department)
-            "#,
-            s.id.0.parse::<i64>()?,
-            firstname,
-            lastname,
-            s.dept
-        )
-        .execute(&mut tx)
-        .await?;
-    }
-    tx.commit().await?;
 
     Ok(())
 }
@@ -329,25 +289,4 @@ SET ( start_time
     .await?;
 
     Ok(())
-}
-
-fn separate_names(name: &str) -> anyhow::Result<(String, String)> {
-    let name: String = name
-        .split_inclusive(|c: char| !c.is_alphabetic())
-        .map(|w| {
-            let mut cs = w.chars();
-            match cs.next() {
-                Some(c) => c.to_string() + &cs.as_str().to_lowercase(),
-                None => String::new(),
-            }
-        })
-        .collect();
-
-    match name.rsplit_once(' ') {
-        Some((l, f)) => Ok((f.to_owned(), l.to_owned())),
-        _ => Err(anyhow!(
-            "Can't split '{}' into firstname and lastname",
-            name
-        )),
-    }
 }
