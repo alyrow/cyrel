@@ -194,6 +194,7 @@ async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
 
                 let updated = Retry::spawn(strategy, || update_event(state, c.clone())).await;
                 if let Err(err) = updated {
+                    // BUG: course id is in `already_updated` but we failed to update it.
                     error!("Failed to update side bar event: {}", err);
                     return;
                 }
