@@ -123,6 +123,18 @@ impl Register {
     }
 }
 
+#[derive(std::fmt::Debug)]
+pub struct ResetPassword {
+    pub tokens: HashMap<String, User>,
+}
+
+impl ResetPassword {
+    pub fn put_user(&mut self, hash: String, user: User) -> () {
+        self.tokens.insert(hash, user);
+        ()
+    }
+}
+
 pub struct HashFunction {}
 
 impl HashFunction {

@@ -1,11 +1,13 @@
 extern crate lettre;
 
+use lettre::{Message, SmtpTransport, Transport};
+use lettre::transport::smtp::authentication::Credentials;
+use tracing::{error, info, warn};
+
+use crate::SETTINGS;
+
 use self::lettre::message::{header, MultiPart, SinglePart};
 use self::lettre::transport::smtp::response::Response;
-use crate::SETTINGS;
-use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
-use tracing::{error, info, warn};
 
 pub struct Email {}
 
@@ -42,6 +44,75 @@ impl Email {
             .from(SETTINGS.smtp.from.as_str().parse().unwrap())
             .to(email.parse().unwrap())
             .subject("Inscription")
+            .multipart(
+                MultiPart::alternative()
+                    .singlepart(
+                        SinglePart::builder()
+                            .header(header::ContentType::TEXT_PLAIN)
+                            .body(body_text), // Every message should have a plain text fallback.
+                    )
+                    .singlepart(
+                        SinglePart::builder()
+                            .header(header::ContentType::TEXT_HTML)
+                            .body(body_html),
+                    ),
+            )
+            .unwrap();
+
+        let creds = Credentials::new(
+            SETTINGS.smtp.username.to_string(),
+            SETTINGS.smtp.password.to_string(),
+        );
+
+        // Open a local connection on port 25
+        let mut mailer = SmtpTransport::relay(SETTINGS.smtp.server.as_str()) //TODO Maybe it's better to init mailer one time for all
+            .unwrap()
+            .credentials(creds)
+            .build();
+        // Send the email
+        let result = mailer.send(&email);
+
+        if result.is_ok() {
+            info!("Email sent");
+        } else {
+            warn!("Could not send email: {:?}", result);
+        }
+
+        result.unwrap()
+    }
+
+
+    pub fn send_reset_password_email(email: String, firstname: String, lastname: String, hash: String) -> Response {
+        let body_html = format!(r#"<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réinitialisation du mot de passe</title>
+</head>
+<body>
+    <h1>Réinitialisation du mot de passe</h1>
+    <p>
+    Bonjour {} {}. Vous avez demandé de réinitialiser votre mot de passe.
+    Si cette demande n'a pas été initié par vous, merci d'ignorer ce mail.
+    </p>
+    <p>Copier-coller le code sur la page de réinitialisation pour continuer :
+        <b>{}</b>
+        </p>
+       </body>
+</html>
+"#, firstname, lastname, hash);
+
+        let body_text = format!("Réinitialisation du mot de passe : \
+         Bonjour {} {}. Vous avez demandé de réinitialiser votre mot de passe. \
+         Si cette demande n'a pas été initié par vous, merci d'ignorer ce mail. \
+         Copier-coller le code sur la page de réinitialisation pour continuer : {} \
+        ", firstname, lastname, hash);
+
+        let email = Message::builder()
+            .from(SETTINGS.smtp.from.as_str().parse().unwrap())
+            .to(email.parse().unwrap())
+            .subject("Rénitialisation du mot de passe")
             .multipart(
                 MultiPart::alternative()
                     .singlepart(

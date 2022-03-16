@@ -399,4 +399,25 @@ VALUES ($1, $2, $3)
 
         Ok(())
     }
+
+    pub async fn update_user(pool: &PgPool, user: User) -> anyhow::Result<()> {
+        let mut tx = pool.begin().await?;
+        let student = sqlx::query!(
+            r#"
+UPDATE users
+SET firstname = $2, lastname = $3, email = $4, password = $5
+WHERE id = $1
+        "#,
+            user.id,
+            user.firstname,
+            user.lastname,
+            user.email,
+            user.password
+        )
+            .execute(&mut tx)
+            .await?;
+        tx.commit().await?;
+
+        Ok(())
+    }
 }
