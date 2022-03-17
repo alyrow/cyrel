@@ -468,7 +468,7 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
-            let is_in_group = Db::is_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
+            let is_in_group = Db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group).await;
             match is_in_group {
                 Ok(_) => {}
                 Err(_) => {

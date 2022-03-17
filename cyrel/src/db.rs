@@ -145,10 +145,39 @@ WHERE user_id = $1 AND group_id = $2
             user_id,
             group_id
         )
-        .fetch_one(pool)
-        .await?;
+            .fetch_one(pool)
+            .await?;
 
         Ok(())
+    }
+
+    pub async fn is_user_in_group_or_brother_group(
+        pool: &PgPool,
+        user_id: i64,
+        group_id: i32,
+    ) -> anyhow::Result<()> {
+        let group = {
+            let result = Db::is_user_in_group(pool, user_id, group_id).await;
+            match result {
+                Ok(_) => return Ok(()),
+                Err(err) => {
+                    ()
+                }
+            }
+        };
+
+        let bro = sqlx::query!(
+            r#"
+SELECT id, name, referent, parent, private
+FROM groups
+WHERE id = $1 AND parent IS NOT NULL
+        "#,
+            group_id
+        )
+            .fetch_one(pool)
+            .await?;
+
+        Db::is_user_in_group(pool, user_id, bro.parent.expect("Parent id can't be null")).await
     }
 
     pub async fn insert_user_in_group(
