@@ -117,9 +117,8 @@ pub struct Register {
 }
 
 impl Register {
-    pub fn put_user(&mut self, hash: String, user: User) -> () {
+    pub fn put_user(&mut self, hash: String, user: User) {
         self.tokens.insert(hash, user);
-        ()
     }
 }
 
@@ -129,9 +128,8 @@ pub struct ResetPassword {
 }
 
 impl ResetPassword {
-    pub fn put_user(&mut self, hash: String, user: User) -> () {
+    pub fn put_user(&mut self, hash: String, user: User) {
         self.tokens.insert(hash, user);
-        ()
     }
 }
 
