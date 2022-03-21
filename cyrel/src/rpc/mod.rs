@@ -303,7 +303,7 @@ impl Rpc for RpcImpl {
 
             let hash = uuid::Uuid::new_v4().to_string();
             info!("{}", hash);
-            let mut register = RpcImpl::get_new_users_tokens();
+            let register = RpcImpl::get_new_users_tokens();
             register.put_user(hash.to_owned(), user);
             let email_response = Email::send_verification_email(email, department, hash);
             if !email_response.is_positive() {
@@ -317,7 +317,7 @@ impl Rpc for RpcImpl {
 
     fn register_2(&self, hash: String) -> BoxFuture<jsonrpc_core::Result<Identity>> {
         Box::pin(async move {
-            let mut register = RpcImpl::get_new_users_tokens();
+            let register = RpcImpl::get_new_users_tokens();
             if !register.tokens.contains_key(&*hash.to_owned()) {
                 warn!(
                     "Someone tried to use an used or inexistant token: {}",
@@ -341,7 +341,7 @@ impl Rpc for RpcImpl {
         password: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
-            let mut register = RpcImpl::get_new_users_tokens();
+            let register = RpcImpl::get_new_users_tokens();
             if !register.tokens.contains_key(&*hash.to_owned()) {
                 warn!(
                     "Someone tried to use an used or inexistant token: {}",
@@ -586,7 +586,7 @@ impl Rpc for RpcImpl {
         password: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
-            let mut reset_password = RpcImpl::get_reset_password_tokens();
+            let reset_password = RpcImpl::get_reset_password_tokens();
             if !reset_password.tokens.contains_key(&*code.to_owned()) {
                 warn!(
                     "Someone tried to use a used or inexistant token: {}",

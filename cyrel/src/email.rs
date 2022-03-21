@@ -64,7 +64,7 @@ impl Email {
         );
 
         // Open a local connection on port 25
-        let mut mailer = SmtpTransport::relay(SETTINGS.smtp.server.as_str()) //TODO Maybe it's better to init mailer one time for all
+        let mailer = SmtpTransport::relay(SETTINGS.smtp.server.as_str()) //TODO Maybe it's better to init mailer one time for all
             .unwrap()
             .credentials(creds)
             .build();
@@ -143,7 +143,7 @@ impl Email {
         );
 
         // Open a local connection on port 25
-        let mut mailer = SmtpTransport::relay(SETTINGS.smtp.server.as_str()) //TODO Maybe it's better to init mailer one time for all
+        let mailer = SmtpTransport::relay(SETTINGS.smtp.server.as_str()) //TODO Maybe it's better to init mailer one time for all
             .unwrap()
             .credentials(creds)
             .build();
