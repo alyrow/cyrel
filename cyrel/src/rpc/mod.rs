@@ -305,7 +305,7 @@ impl Rpc for RpcImpl {
             info!("{}", hash);
             let register = RpcImpl::get_new_users_tokens();
             register.put_user(hash.to_owned(), user);
-            let email_response = Email::send_verification_email(email, department, hash);
+            let email_response = Email::send_verification_email(email, hash);
             if !email_response.is_positive() {
                 warn!("{}", email_response.code().to_string());
                 return Err(RpcError::UnknownError.into());
@@ -361,7 +361,7 @@ impl Rpc for RpcImpl {
             };
             let pool = RpcImpl::get_postgres();
 
-            let validity: () = {
+            {
                 let result = Db::insert_user(&pool, user).await;
                 match result {
                     Ok(data) => data,
@@ -370,7 +370,7 @@ impl Rpc for RpcImpl {
                         return Err(RpcError::Unimplemented.into());
                     }
                 }
-            };
+            }
             register.tokens.remove(&*hash);
             Ok("Account created!".to_string())
         })
@@ -410,7 +410,6 @@ impl Rpc for RpcImpl {
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
-            let user = user.unwrap();
             let result = Db::get_all_groups(RpcImpl::get_postgres()).await;
             match result {
                 Ok(groups) => Ok(groups),
@@ -468,8 +467,10 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
-            match Db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group).await {
-                Ok(true) => {},
+            match Db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group)
+                .await
+            {
+                Ok(true) => {}
                 _ => {
                     return Err(RpcError::Unimplemented.into());
                 }
@@ -606,7 +607,7 @@ impl Rpc for RpcImpl {
             };
             let pool = RpcImpl::get_postgres();
 
-            let validity: () = {
+            {
                 let result = Db::update_user(&pool, user).await;
                 match result {
                     Ok(data) => data,

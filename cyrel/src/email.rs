@@ -11,7 +11,7 @@ use self::lettre::transport::smtp::response::Response;
 pub struct Email {}
 
 impl Email {
-    pub fn send_verification_email(email: String, department: String, hash: String) -> Response {
+    pub fn send_verification_email(email: String, hash: String) -> Response {
         let mut body_html = r#"<!DOCTYPE html>
 <html lang="en">
 <head>
