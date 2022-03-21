@@ -1,2 +1,5 @@
 [workspace]
 members = ["cyrel", "cyrel-sync"]
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3
