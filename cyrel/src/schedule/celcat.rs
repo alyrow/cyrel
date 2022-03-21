@@ -1,5 +1,4 @@
 use chrono::NaiveDateTime;
-use futures::future::try_join_all;
 
 use super::Course;
 

@@ -1,8 +1,7 @@
 extern crate lettre;
 
-use lettre::transport::smtp::authentication::Credentials;
-use lettre::{Message, SmtpTransport, Transport};
-use tracing::{error, info, warn};
+use lettre::{transport::smtp::authentication::Credentials, Message, SmtpTransport, Transport};
+use tracing::{info, warn};
 
 use crate::SETTINGS;
 

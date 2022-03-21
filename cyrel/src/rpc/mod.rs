@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use chrono::{NaiveDateTime, Utc};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
-use jsonwebtoken::errors::Error;
 use once_cell::sync::OnceCell;
-use pbkdf2::password_hash::{PasswordHash, PasswordVerifier};
-use pbkdf2::Pbkdf2;
+use pbkdf2::{
+    password_hash::{PasswordHash, PasswordVerifier},
+    Pbkdf2,
+};
 use rand::prelude::StdRng;
 use sqlx::PgPool;
 use tracing::{error, info, warn};
@@ -15,7 +16,6 @@ use crate::authentication::{CheckUser, Claims, HashFunction, Meta, Register, Res
 use crate::db::Db;
 use crate::email::Email;
 use crate::models::{Department, Group, Identity, User};
-use crate::schedule::celcat::fetch_calendar;
 use crate::schedule::Course;
 use crate::SETTINGS;
 
