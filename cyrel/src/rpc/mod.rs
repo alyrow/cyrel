@@ -12,7 +12,7 @@ use rand::prelude::StdRng;
 use sqlx::PgPool;
 use tracing::{error, info, warn};
 
-use crate::authentication::{CheckUser, Claims, HashFunction, Meta, Register, ResetPassword};
+use crate::authentication::{self, Claims, Meta, Register, ResetPassword};
 use crate::db;
 use crate::email::Email;
 use crate::models::{Department, Group, Identity, User};
@@ -351,7 +351,7 @@ impl Rpc for RpcImpl {
             }
             let user_saved = register.tokens.get(&hash).unwrap();
             let id_str = user_saved.id.to_string();
-            let pass_hasher = HashFunction::hash_password(password.to_owned(), id_str.to_owned());
+            let pass_hasher = authentication::hash_password(password.to_owned(), id_str.to_owned());
             let user = User {
                 id: user_saved.id.to_owned(),
                 firstname,
@@ -378,7 +378,7 @@ impl Rpc for RpcImpl {
 
     fn is_logged(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<bool>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             return match user {
                 Some(_) => Ok(true),
                 None => Ok(false),
@@ -388,7 +388,7 @@ impl Rpc for RpcImpl {
 
     fn my_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
@@ -406,7 +406,7 @@ impl Rpc for RpcImpl {
 
     fn all_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
@@ -427,7 +427,7 @@ impl Rpc for RpcImpl {
         groups: Vec<i32>,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
@@ -462,7 +462,7 @@ impl Rpc for RpcImpl {
         group: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
@@ -490,7 +490,7 @@ impl Rpc for RpcImpl {
         client_id: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Option<String>>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
@@ -518,7 +518,7 @@ impl Rpc for RpcImpl {
         config: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
-            let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
@@ -597,7 +597,7 @@ impl Rpc for RpcImpl {
             }
             let user_saved = reset_password.tokens.get(&code).unwrap();
             let id_str = user_saved.id.to_string();
-            let pass_hasher = HashFunction::hash_password(password.to_owned(), id_str.to_owned());
+            let pass_hasher = authentication::hash_password(password.to_owned(), id_str.to_owned());
             let user = User {
                 id: user_saved.id.to_owned(),
                 firstname: user_saved.firstname.to_owned(),
