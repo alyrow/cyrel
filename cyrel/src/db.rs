@@ -92,7 +92,7 @@ WHERE id = $1 AND department = $2
 
     pub async fn insert_user(pool: &PgPool, user: User) -> anyhow::Result<()> {
         let mut tx = pool.begin().await?;
-        let student = sqlx::query!(
+        sqlx::query!(
             r#"
 INSERT INTO users (id, firstname, lastname, email, password)
 VALUES ($1, $2, $3, $4, $5)
@@ -210,7 +210,7 @@ WHERE id = $1 AND parent IS NOT NULL
         }
 
         let mut tx = pool.begin().await?;
-        let group_add = sqlx::query!(
+        sqlx::query!(
             r#"
 INSERT INTO users_groups (user_id, group_id)
 VALUES ($1, $2)
@@ -415,7 +415,7 @@ VALUES ($1, $2, $3)
 
     pub async fn update_user(pool: &PgPool, user: User) -> anyhow::Result<()> {
         let mut tx = pool.begin().await?;
-        let student = sqlx::query!(
+        sqlx::query!(
             r#"
 UPDATE users
 SET firstname = $2, lastname = $3, email = $4, password = $5
