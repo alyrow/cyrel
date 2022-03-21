@@ -14,7 +14,7 @@ use tracing::{error, info, warn};
 
 use crate::authentication::{self, Claims, Meta, Register, ResetPassword};
 use crate::db;
-use crate::email::Email;
+use crate::email;
 use crate::models::{Department, Group, Identity, User};
 use crate::schedule::Course;
 use crate::SETTINGS;
@@ -305,7 +305,7 @@ impl Rpc for RpcImpl {
             info!("{}", hash);
             let register = RpcImpl::get_new_users_tokens();
             register.put_user(hash.to_owned(), user);
-            let email_response = Email::send_verification_email(email, hash);
+            let email_response = email::send_verification_email(email, hash);
             if !email_response.is_positive() {
                 warn!("{}", email_response.code().to_string());
                 return Err(RpcError::UnknownError.into());
@@ -571,7 +571,7 @@ impl Rpc for RpcImpl {
             info!("{}", hash);
             let reset_password = RpcImpl::get_reset_password_tokens();
             reset_password.put_user(hash.to_owned(), user);
-            let email_response = Email::send_reset_password_email(email, firstname, lastname, hash);
+            let email_response = email::send_reset_password_email(email, firstname, lastname, hash);
             if !email_response.is_positive() {
                 warn!("{}", email_response.code().to_string());
                 return Err(RpcError::UnknownError.into());
