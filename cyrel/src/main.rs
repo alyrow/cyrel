@@ -15,7 +15,6 @@ use dotenv::dotenv;
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
 use lazy_static::lazy_static;
-use rand::prelude::*;
 use tracing::{debug, info, trace};
 use tracing_subscriber::EnvFilter;
 
@@ -53,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
 
     let mut io = MetaIoHandler::default();
 
-    let rpc = RpcImpl::new(&SETTINGS.database.url, StdRng::from_entropy()).await;
+    let rpc = RpcImpl::new(&SETTINGS.database.url).await;
 
     io.extend_with(rpc.to_delegate());
 

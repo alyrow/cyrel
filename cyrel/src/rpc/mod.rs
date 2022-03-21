@@ -8,7 +8,6 @@ use pbkdf2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Pbkdf2,
 };
-use rand::prelude::StdRng;
 use sqlx::PgPool;
 use tracing::{error, info, warn};
 
@@ -113,7 +112,6 @@ pub trait Rpc {
 }
 
 pub struct RpcImpl {
-    pub rng: StdRng,
 }
 
 static POSTGRES: OnceCell<PgPool> = OnceCell::new();
@@ -121,11 +119,11 @@ static mut NEW_USERS_TOKENS: OnceCell<Register> = OnceCell::new();
 static mut RESET_PASSWORD_TOKENS: OnceCell<ResetPassword> = OnceCell::new();
 
 impl RpcImpl {
-    pub async fn new(url: &String, rng: StdRng) -> RpcImpl {
+    pub async fn new(url: &String) -> RpcImpl {
         RpcImpl::create_pg_pool(url).await;
         RpcImpl::create_new_users_tokens().await;
         RpcImpl::create_reset_password_tokens().await;
-        return RpcImpl { rng };
+        return RpcImpl {};
     }
 
     pub async fn create_pg_pool(database_url: &String) {
