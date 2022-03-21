@@ -247,7 +247,7 @@ WHERE user_id = $1
         Ok(groups)
     }
 
-    pub async fn get_all_groups(pool: &PgPool, user_id: i64) -> anyhow::Result<Vec<Group>> {
+    pub async fn get_all_groups(pool: &PgPool) -> anyhow::Result<Vec<Group>> {
         let grps = sqlx::query!(
             r#"
 SELECT id, name, referent, parent, private

@@ -411,7 +411,7 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
-            let result = Db::get_all_groups(RpcImpl::get_postgres(), user.id).await;
+            let result = Db::get_all_groups(RpcImpl::get_postgres()).await;
             match result {
                 Ok(groups) => Ok(groups),
                 Err(err) => {
