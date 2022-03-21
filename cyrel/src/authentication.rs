@@ -12,7 +12,7 @@ use tracing::warn;
 
 use crate::db::Db;
 use crate::models::User;
-use crate::rpc::{RpcError, RpcImpl};
+use crate::rpc::RpcError;
 use crate::SETTINGS;
 
 #[derive(Debug, Default, Clone)]
@@ -99,7 +99,7 @@ impl CheckUser {
                 }
             };
             let sub = claims.sub.to_owned();
-            let check_result = CheckUser::jwt_check(RpcImpl::get_postgres(), sub).await;
+            let check_result = CheckUser::jwt_check(pool, sub).await;
             match check_result {
                 Ok(user) => user,
                 Err(err) => {
