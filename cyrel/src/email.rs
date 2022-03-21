@@ -1,7 +1,7 @@
 extern crate lettre;
 
-use lettre::{Message, SmtpTransport, Transport};
 use lettre::transport::smtp::authentication::Credentials;
+use lettre::{Message, SmtpTransport, Transport};
 use tracing::{error, info, warn};
 
 use crate::SETTINGS;
@@ -81,9 +81,14 @@ impl Email {
         result.unwrap()
     }
 
-
-    pub fn send_reset_password_email(email: String, firstname: String, lastname: String, hash: String) -> Response {
-        let body_html = format!(r#"<!DOCTYPE html>
+    pub fn send_reset_password_email(
+        email: String,
+        firstname: String,
+        lastname: String,
+        hash: String,
+    ) -> Response {
+        let body_html = format!(
+            r#"<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -101,13 +106,18 @@ impl Email {
         </p>
        </body>
 </html>
-"#, firstname, lastname, hash);
+"#,
+            firstname, lastname, hash
+        );
 
-        let body_text = format!("Réinitialisation du mot de passe : \
+        let body_text = format!(
+            "Réinitialisation du mot de passe : \
          Bonjour {} {}. Vous avez demandé de réinitialiser votre mot de passe. \
          Si cette demande n'a pas été initié par vous, merci d'ignorer ce mail. \
          Copier-coller le code sur la page de réinitialisation pour continuer : {} \
-        ", firstname, lastname, hash);
+        ",
+            firstname, lastname, hash
+        );
 
         let email = Message::builder()
             .from(SETTINGS.smtp.from.as_str().parse().unwrap())

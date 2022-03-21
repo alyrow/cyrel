@@ -1,6 +1,6 @@
-use std::{collections::HashMap, time::Duration};
 use std::env;
 use std::sync::Arc;
+use std::{collections::HashMap, time::Duration};
 
 use anyhow::{anyhow, Context};
 use celcat::{
@@ -16,7 +16,7 @@ use dotenv::dotenv;
 use futures::future::{join_all, try_join_all};
 use sqlx::postgres::PgPool;
 use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
-use tokio_retry::{Retry, strategy::ExponentialBackoff};
+use tokio_retry::{strategy::ExponentialBackoff, Retry};
 use tracing::{error, warn};
 use tracing_subscriber::EnvFilter;
 
@@ -60,14 +60,11 @@ async fn main() -> anyhow::Result<()> {
 
     let handle = tokio::spawn(async move { event_updater(state, rx).await });
 
-    join_all(
-        gr.into_iter()
-            .map(|(g, r)| async move {
-                if let Err(err) = update_courses(&state, g, r, tx_ref.clone()).await {
-                    error!("Failed to update courses: {}", err);
-                }
-            }),
-    )
+    join_all(gr.into_iter().map(|(g, r)| async move {
+        if let Err(err) = update_courses(&state, g, r, tx_ref.clone()).await {
+            error!("Failed to update courses: {}", err);
+        }
+    }))
     .await;
 
     drop(tx);
@@ -193,8 +190,8 @@ async fn event_updater(state: &'static State, mut rx: mpsc::Receiver<Message>) {
             already_updated.insert(c.id.0.clone(), lock);
 
             tokio::spawn(async move {
-                let strategy = ExponentialBackoff::from_millis(100)
-                    .max_delay(Duration::from_secs(60));
+                let strategy =
+                    ExponentialBackoff::from_millis(100).max_delay(Duration::from_secs(60));
 
                 let updated = Retry::spawn(strategy, || update_event(state, c.clone())).await;
                 if let Err(err) = updated {

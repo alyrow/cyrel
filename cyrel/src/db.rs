@@ -145,8 +145,8 @@ WHERE user_id = $1 AND group_id = $2
             user_id,
             group_id
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Ok(())
     }
@@ -160,9 +160,7 @@ WHERE user_id = $1 AND group_id = $2
             let result = Db::is_user_in_group(pool, user_id, group_id).await;
             match result {
                 Ok(_) => return Ok(()),
-                Err(err) => {
-                    ()
-                }
+                Err(err) => (),
             }
         };
 
@@ -174,8 +172,8 @@ WHERE id = $1 AND parent IS NOT NULL
         "#,
             group_id
         )
-            .fetch_one(pool)
-            .await?;
+        .fetch_one(pool)
+        .await?;
 
         Db::is_user_in_group(pool, user_id, bro.parent.expect("Parent id can't be null")).await
     }
@@ -335,10 +333,7 @@ WHERE id = $1
         Ok(courses)
     }
 
-    pub async fn is_client_exist(
-        pool: &PgPool,
-        client_id: i32,
-    ) -> anyhow::Result<()> {
+    pub async fn is_client_exist(pool: &PgPool, client_id: i32) -> anyhow::Result<()> {
         let _ = sqlx::query!(
             r#"
 SELECT id, name
@@ -347,9 +342,8 @@ WHERE id = $1
         "#,
             client_id
         )
-            .fetch_one(pool)
-            .await?;
-
+        .fetch_one(pool)
+        .await?;
 
         Ok(())
     }
@@ -368,9 +362,8 @@ WHERE client_id = $1 AND user_id = $2
             client_id,
             user_id
         )
-            .fetch_one(pool)
-            .await?;
-
+        .fetch_one(pool)
+        .await?;
 
         Ok(config.config)
     }
@@ -407,12 +400,12 @@ WHERE client_id = $1 AND user_id = $2
                     user.id,
                     config
                 )
-                    .execute(&mut tx)
-                    .await?;
-            },
+                .execute(&mut tx)
+                .await?;
+            }
             Err(_) => {
                 let _ = sqlx::query!(
-            r#"
+                    r#"
 INSERT INTO clients_users_config (client_id, user_id, config)
 VALUES ($1, $2, $3)
                 "#,
@@ -420,8 +413,8 @@ VALUES ($1, $2, $3)
                     user.id,
                     config
                 )
-                    .execute(&mut tx)
-                    .await?;
+                .execute(&mut tx)
+                .await?;
             }
         }
         tx.commit().await?;
@@ -443,8 +436,8 @@ WHERE id = $1
             user.email,
             user.password
         )
-            .execute(&mut tx)
-            .await?;
+        .execute(&mut tx)
+        .await?;
         tx.commit().await?;
 
         Ok(())

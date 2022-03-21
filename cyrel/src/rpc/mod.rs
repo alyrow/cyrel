@@ -468,7 +468,9 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
-            let is_in_group = Db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group).await;
+            let is_in_group =
+                Db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group)
+                    .await;
             match is_in_group {
                 Ok(_) => {}
                 Err(_) => {
@@ -484,7 +486,11 @@ impl Rpc for RpcImpl {
         })
     }
 
-    fn client_configs_get(&self, meta: Self::Metadata, client_id: i32) -> BoxFuture<jsonrpc_core::Result<Option<String>>> {
+    fn client_configs_get(
+        &self,
+        meta: Self::Metadata,
+        client_id: i32,
+    ) -> BoxFuture<jsonrpc_core::Result<Option<String>>> {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
@@ -492,10 +498,9 @@ impl Rpc for RpcImpl {
             }
             let user = user.unwrap();
 
-            let is_client_exist =
-                Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
+            let is_client_exist = Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
             match is_client_exist {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => return Err(RpcError::UnknownClient.into()),
             };
 
@@ -508,7 +513,12 @@ impl Rpc for RpcImpl {
         })
     }
 
-    fn client_configs_set(&self, meta: Self::Metadata, client_id: i32, config: String) -> BoxFuture<jsonrpc_core::Result<String>> {
+    fn client_configs_set(
+        &self,
+        meta: Self::Metadata,
+        client_id: i32,
+        config: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
             let user = CheckUser::logged_user_get(RpcImpl::get_postgres(), meta).await;
             if user.is_none() {
@@ -516,15 +526,15 @@ impl Rpc for RpcImpl {
             }
             let user = user.unwrap();
 
-            let is_client_exist =
-                Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
+            let is_client_exist = Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
             match is_client_exist {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(_) => return Err(RpcError::UnknownClient.into()),
             };
 
             let set_config =
-                Db::set_client_user_config(RpcImpl::get_postgres(), client_id, user.id, config).await;
+                Db::set_client_user_config(RpcImpl::get_postgres(), client_id, user.id, config)
+                    .await;
             return match set_config {
                 Ok(_) => Ok("Success!".parse().unwrap()),
                 Err(_) => Err(RpcError::UnknownError.into()),
@@ -532,7 +542,11 @@ impl Rpc for RpcImpl {
         })
     }
 
-    fn send_password_reset_code(&self, ldap: i64, email: String) -> BoxFuture<jsonrpc_core::Result<String>> {
+    fn send_password_reset_code(
+        &self,
+        ldap: i64,
+        email: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
             let pool = RpcImpl::get_postgres();
 
@@ -544,7 +558,7 @@ impl Rpc for RpcImpl {
                     Err(_) => {
                         warn!("user student {} is not registered", ldap);
                         return Err(RpcError::IncorrectLoginInfo.into());
-                    },
+                    }
                 }
             };
 
@@ -569,7 +583,11 @@ impl Rpc for RpcImpl {
         })
     }
 
-    fn reset_password(&self, code: String, password: String) -> BoxFuture<jsonrpc_core::Result<String>> {
+    fn reset_password(
+        &self,
+        code: String,
+        password: String,
+    ) -> BoxFuture<jsonrpc_core::Result<String>> {
         Box::pin(async move {
             let mut reset_password = RpcImpl::get_reset_password_tokens();
             if !reset_password.tokens.contains_key(&*code.to_owned()) {
