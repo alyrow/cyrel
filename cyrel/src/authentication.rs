@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::warn;
 
-use crate::db::Db;
+use crate::db;
 use crate::models::User;
 use crate::rpc::RpcError;
 use crate::SETTINGS;
@@ -69,7 +69,7 @@ pub struct CheckUser {}
 impl CheckUser {
     pub async fn jwt_check(pool: &PgPool, sub: String) -> jsonrpc_core::Result<User> {
         let user: User = {
-            let result = Db::match_user_by_id(&pool, sub.parse::<i64>().unwrap()).await;
+            let result = db::match_user_by_id(&pool, sub.parse::<i64>().unwrap()).await;
 
             match result {
                 Ok(user) => user,

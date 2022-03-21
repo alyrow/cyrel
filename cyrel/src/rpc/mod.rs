@@ -13,7 +13,7 @@ use sqlx::PgPool;
 use tracing::{error, info, warn};
 
 use crate::authentication::{CheckUser, Claims, HashFunction, Meta, Register, ResetPassword};
-use crate::db::Db;
+use crate::db;
 use crate::email::Email;
 use crate::models::{Department, Group, Identity, User};
 use crate::schedule::Course;
@@ -208,7 +208,7 @@ impl Rpc for RpcImpl {
             let pool = RpcImpl::get_postgres();
 
             let user: User = {
-                let result = Db::match_user_by_email(&pool, email.to_owned()).await;
+                let result = db::match_user_by_email(&pool, email.to_owned()).await;
 
                 match result {
                     Ok(user) => user,
@@ -244,7 +244,7 @@ impl Rpc for RpcImpl {
             let pool = RpcImpl::get_postgres();
 
             let dpmt: Department = {
-                let result = Db::match_department(&pool, department.clone()).await;
+                let result = db::match_department(&pool, department.clone()).await;
 
                 match result {
                     Ok(dpmt) => dpmt,
@@ -260,7 +260,7 @@ impl Rpc for RpcImpl {
             email.push_str(&*dpmt.domain);
 
             let mut user: User = {
-                let result = Db::match_user_by_id(&pool, ldap).await;
+                let result = db::match_user_by_id(&pool, ldap).await;
 
                 match result {
                     Ok(_) => {
@@ -277,7 +277,7 @@ impl Rpc for RpcImpl {
                 }
             };
 
-            let result = Db::match_user_by_email(&pool, email.to_owned()).await;
+            let result = db::match_user_by_email(&pool, email.to_owned()).await;
             match result {
                 Ok(u) => {
                     warn!("email {} is already used for user {}", email, u.id);
@@ -287,7 +287,7 @@ impl Rpc for RpcImpl {
             }
 
             let validity: (String, String) = {
-                let result = Db::match_celcat_student(&pool, ldap, department.clone()).await;
+                let result = db::match_celcat_student(&pool, ldap, department.clone()).await;
 
                 match result {
                     Ok(data) => data,
@@ -362,7 +362,7 @@ impl Rpc for RpcImpl {
             let pool = RpcImpl::get_postgres();
 
             {
-                let result = Db::insert_user(&pool, user).await;
+                let result = db::insert_user(&pool, user).await;
                 match result {
                     Ok(data) => data,
                     Err(err) => {
@@ -393,7 +393,7 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
-            let result = Db::get_user_groups(RpcImpl::get_postgres(), user.id).await;
+            let result = db::get_user_groups(RpcImpl::get_postgres(), user.id).await;
             match result {
                 Ok(groups) => Ok(groups),
                 Err(err) => {
@@ -410,7 +410,7 @@ impl Rpc for RpcImpl {
             if user.is_none() {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
-            let result = Db::get_all_groups(RpcImpl::get_postgres()).await;
+            let result = db::get_all_groups(RpcImpl::get_postgres()).await;
             match result {
                 Ok(groups) => Ok(groups),
                 Err(err) => {
@@ -436,7 +436,7 @@ impl Rpc for RpcImpl {
             let mut failure = Vec::<i32>::new();
             for group in groups {
                 let result =
-                    Db::insert_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
+                    db::insert_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
                 match result {
                     Ok(_) => {}
                     Err(_) => {
@@ -467,7 +467,7 @@ impl Rpc for RpcImpl {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
             let user = user.unwrap();
-            match Db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group)
+            match db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group)
                 .await
             {
                 Ok(true) => {}
@@ -476,7 +476,7 @@ impl Rpc for RpcImpl {
                 }
             }
             let get_courses =
-                Db::get_group_courses(RpcImpl::get_postgres(), group, start, end).await;
+                db::get_group_courses(RpcImpl::get_postgres(), group, start, end).await;
             return match get_courses {
                 Ok(courses) => Ok(courses),
                 Err(_) => Err(RpcError::Unimplemented.into()),
@@ -496,14 +496,14 @@ impl Rpc for RpcImpl {
             }
             let user = user.unwrap();
 
-            let is_client_exist = Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
+            let is_client_exist = db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
             match is_client_exist {
                 Ok(_) => {}
                 Err(_) => return Err(RpcError::UnknownClient.into()),
             };
 
             let get_config =
-                Db::get_client_user_config(RpcImpl::get_postgres(), client_id, user.id).await;
+                db::get_client_user_config(RpcImpl::get_postgres(), client_id, user.id).await;
             return match get_config {
                 Ok(config) => Ok(config),
                 Err(_) => Ok(None),
@@ -524,14 +524,14 @@ impl Rpc for RpcImpl {
             }
             let user = user.unwrap();
 
-            let is_client_exist = Db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
+            let is_client_exist = db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
             match is_client_exist {
                 Ok(_) => {}
                 Err(_) => return Err(RpcError::UnknownClient.into()),
             };
 
             let set_config =
-                Db::set_client_user_config(RpcImpl::get_postgres(), client_id, user.id, config)
+                db::set_client_user_config(RpcImpl::get_postgres(), client_id, user.id, config)
                     .await;
             return match set_config {
                 Ok(_) => Ok("Success!".parse().unwrap()),
@@ -549,7 +549,7 @@ impl Rpc for RpcImpl {
             let pool = RpcImpl::get_postgres();
 
             let user: User = {
-                let result = Db::match_user_by_id(&pool, ldap).await;
+                let result = db::match_user_by_id(&pool, ldap).await;
 
                 match result {
                     Ok(user) => user,
@@ -608,7 +608,7 @@ impl Rpc for RpcImpl {
             let pool = RpcImpl::get_postgres();
 
             {
-                let result = Db::update_user(&pool, user).await;
+                let result = db::update_user(&pool, user).await;
                 match result {
                     Ok(data) => data,
                     Err(err) => {
