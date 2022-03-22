@@ -5,8 +5,10 @@ use serde::Serialize;
 pub struct Course {
     /// Unique ID
     pub id: String,
-    pub start: NaiveDateTime,
-    pub end: Option<NaiveDateTime>,
+    #[serde(rename = "start")]
+    pub start_time: NaiveDateTime,
+    #[serde(rename = "end")]
+    pub end_time: Option<NaiveDateTime>,
     pub category: Option<String>,
 
     /// Subject being taught

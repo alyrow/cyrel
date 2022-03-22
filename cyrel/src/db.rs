@@ -300,8 +300,8 @@ WHERE id = $1
 
         let course = Course {
             id: course.id,
-            start: course.start_time,
-            end: course.end_time,
+            start_time: course.start_time,
+            end_time: course.end_time,
             category: course.category,
             module: course.module,
             room: course.room,
@@ -309,7 +309,7 @@ WHERE id = $1
             description: course.description,
         };
 
-        if course.start >= start && course.start <= end {
+        if course.start_time >= start && course.start_time <= end {
             courses.push(course);
         }
     }
