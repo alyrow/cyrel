@@ -8,9 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tracing::warn;
 
-use crate::db;
 use crate::models::User;
-use crate::rpc::RpcError;
 use crate::SETTINGS;
 
 #[derive(Debug, Default, Clone)]
@@ -62,48 +60,30 @@ impl Claims {
     }
 }
 
-pub async fn jwt_check(pool: &PgPool, sub: String) -> jsonrpc_core::Result<User> {
-    let user: User = {
-        let result = db::match_user_by_id(&pool, sub.parse::<i64>().unwrap()).await;
-
-        match result {
-            Ok(user) => user,
-            Err(_) => {
-                warn!("unknown connected user {}", sub);
-                return Err(RpcError::IncorrectLoginInfo.into());
-            }
-        }
-    };
-    Ok(user)
-}
-
 pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> Option<User> {
-    let user = {
-        let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret) {
-            Ok(claims) => claims,
-            Err(err) => {
-                warn!("{}", err.to_string());
-                return None;
-            }
-        };
-        let claims = match claims {
-            Some(claims) => claims,
-            None => {
-                warn!("User not logged!");
-                return None;
-            }
-        };
-        let sub = claims.sub.to_owned();
-        let check_result = jwt_check(pool, sub).await;
-        match check_result {
-            Ok(user) => user,
-            Err(err) => {
-                warn!("{}", err.to_string());
-                return None;
-            }
-        }
+    let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret) {
+        Ok(Some(claims)) => claims,
+        Ok(None) => {
+            warn!("User not logged!");
+            return None;
+        },
+        Err(err) => {
+            warn!("{}", err.to_string());
+            return None;
+        },
     };
-    Some(user)
+
+    match sqlx::query_as!(
+        User,
+        "select * from users where id = $1",
+        claims.sub.parse::<i64>().unwrap(),
+    ).fetch_one(pool).await {
+        Ok(user) => Some(user),
+        Err(err) => {
+            warn!("{}", err.to_string());
+            None
+        }
+    }
 }
 
 pub fn hash_password(password: String, salt: String) -> String {
