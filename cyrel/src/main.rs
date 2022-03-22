@@ -15,6 +15,7 @@ use dotenv::dotenv;
 use jsonrpc_core::*;
 use jsonrpc_http_server::*;
 use lazy_static::lazy_static;
+use sqlx::postgres::PgPoolOptions;
 use tracing::{debug, info, trace};
 use tracing_subscriber::EnvFilter;
 
@@ -52,7 +53,8 @@ async fn main() -> anyhow::Result<()> {
 
     let mut io = MetaIoHandler::default();
 
-    let rpc = RpcImpl::new(&SETTINGS.database.url).await;
+    let db = PgPoolOptions::new().connect(&SETTINGS.database.url).await?;
+    let rpc = RpcImpl::new(db);
 
     io.extend_with(rpc.to_delegate());
 

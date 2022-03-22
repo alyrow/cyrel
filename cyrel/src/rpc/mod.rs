@@ -1,18 +1,19 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use chrono::{NaiveDateTime, Utc};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
-use once_cell::sync::OnceCell;
 use pbkdf2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Pbkdf2,
 };
 use sqlx::PgPool;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
-use crate::authentication::{self, Claims, Meta, Register, ResetPassword};
-use crate::db;
+use crate::authentication::{self, Claims, Meta};
 use crate::email;
 use crate::models::{Department, Group, Identity, User};
 use crate::schedule::Course;
@@ -111,63 +112,22 @@ pub trait Rpc {
     ) -> BoxFuture<jsonrpc_core::Result<String>>;
 }
 
-pub struct RpcImpl {
+pub struct RpcImpl(Arc<RpcState>);
+
+struct RpcState {
+    db: PgPool,
+    // FIXME: put those in the DB
+    new_users_tokens: Mutex<HashMap<String, User>>,
+    reset_password_tokens: Mutex<HashMap<String, User>>,
 }
 
-static POSTGRES: OnceCell<PgPool> = OnceCell::new();
-static mut NEW_USERS_TOKENS: OnceCell<Register> = OnceCell::new();
-static mut RESET_PASSWORD_TOKENS: OnceCell<ResetPassword> = OnceCell::new();
-
 impl RpcImpl {
-    pub async fn new(url: &String) -> RpcImpl {
-        RpcImpl::create_pg_pool(url).await;
-        RpcImpl::create_new_users_tokens().await;
-        RpcImpl::create_reset_password_tokens().await;
-        return RpcImpl {};
-    }
-
-    pub async fn create_pg_pool(database_url: &String) {
-        let pool = PgPool::connect(database_url)
-            .await
-            .expect("Failed to create pool.");
-        POSTGRES
-            .set(pool)
-            .expect("Postgresql global pool must set success")
-    }
-
-    #[inline]
-    pub fn get_postgres() -> &'static PgPool {
-        unsafe { POSTGRES.get_unchecked() }
-    }
-
-    pub async fn create_new_users_tokens() {
-        unsafe {
-            NEW_USERS_TOKENS
-                .set(Register {
-                    tokens: HashMap::<String, User>::new(),
-                })
-                .expect("NEW_USERS_TOKENS global mut must set success")
-        }
-    }
-
-    #[inline]
-    pub fn get_new_users_tokens() -> &'static mut Register {
-        unsafe { NEW_USERS_TOKENS.get_mut().expect("Blblbl") }
-    }
-
-    pub async fn create_reset_password_tokens() {
-        unsafe {
-            RESET_PASSWORD_TOKENS
-                .set(ResetPassword {
-                    tokens: HashMap::<String, User>::new(),
-                })
-                .expect("RESET_PASSWORD_TOKENS global mut must set success")
-        }
-    }
-
-    #[inline]
-    pub fn get_reset_password_tokens() -> &'static mut ResetPassword {
-        unsafe { RESET_PASSWORD_TOKENS.get_mut().expect("Blblbl") }
+    pub fn new(db: PgPool) -> RpcImpl {
+        RpcImpl(Arc::new(RpcState {
+            db,
+            new_users_tokens: Mutex::new(HashMap::new()),
+            reset_password_tokens: Mutex::new(HashMap::new()),
+        }))
     }
 }
 
@@ -202,18 +162,17 @@ impl Rpc for RpcImpl {
     }
 
     fn login(&self, email: String, password: String) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let pool = RpcImpl::get_postgres();
-
-            let user: User = {
-                let result = db::match_user_by_email(&pool, email.to_owned()).await;
-
-                match result {
-                    Ok(user) => user,
-                    Err(_) => {
-                        warn!("{} isn't a know email", email);
-                        return Err(RpcError::IncorrectLoginInfo.into());
-                    }
+            let user: User = match server_error! {
+                sqlx::query_as!(User, "select * from users where email = $1", email)
+                    .fetch_optional(&state.db)
+                    .await
+            } {
+                Some(user) => user,
+                None => {
+                    warn!("{} isn't a know email", email);
+                    return Err(RpcError::IncorrectLoginInfo.into());
                 }
             };
             let hash = server_error! {
@@ -238,18 +197,17 @@ impl Rpc for RpcImpl {
         department: String,
         email: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let pool = RpcImpl::get_postgres();
-
-            let dpmt: Department = {
-                let result = db::match_department(&pool, department.clone()).await;
-
-                match result {
-                    Ok(dpmt) => dpmt,
-                    Err(_) => {
-                        warn!("department {} is unknown", department);
-                        return Err(RpcError::UnknownDepartment.into());
-                    }
+            let dpmt: Department = match server_error! {
+                sqlx::query_as!(Department, "select * from departments where id = $1", department)
+                    .fetch_optional(&state.db)
+                    .await
+            } {
+                Some(dpmt) => dpmt,
+                None => {
+                    warn!("department {} is unknown", department);
+                    return Err(RpcError::UnknownDepartment.into());
                 }
             };
 
@@ -257,52 +215,58 @@ impl Rpc for RpcImpl {
             email.push_str("@");
             email.push_str(&*dpmt.domain);
 
-            let mut user: User = {
-                let result = db::match_user_by_id(&pool, ldap).await;
-
-                match result {
-                    Ok(_) => {
-                        warn!("user {} is already registered", ldap);
-                        return Err(RpcError::AlreadyRegistered.into());
-                    }
-                    Err(_) => User {
-                        id: ldap,
-                        firstname: "".to_string(),
-                        lastname: "".to_string(),
-                        email: email.to_owned(),
-                        password: "".to_string(),
-                    },
-                }
-            };
-
-            let result = db::match_user_by_email(&pool, email.to_owned()).await;
-            match result {
-                Ok(u) => {
-                    warn!("email {} is already used for user {}", email, u.id);
-                    return Err(RpcError::AlreadyRegistered.into());
-                }
-                Err(_) => {}
+            if server_error!(
+                sqlx::query!("select id from users where id = $1", ldap)
+                    .fetch_optional(&state.db)
+                    .await
+            )
+            .is_some()
+            {
+                warn!("user {} is already registered", ldap);
+                return Err(RpcError::AlreadyRegistered.into());
             }
 
-            let validity: (String, String) = {
-                let result = db::match_celcat_student(&pool, ldap, department.clone()).await;
+            match server_error! {
+                sqlx::query!("select id from users where email = $1", email)
+                    .fetch_optional(&state.db)
+                    .await
+            } {
+                Some(x) => {
+                    warn!("email {} is already used for user {}", email, x.id);
+                    return Err(RpcError::AlreadyRegistered.into());
+                }
+                None => {}
+            }
 
-                match result {
-                    Ok(data) => data,
-                    Err(_) => {
-                        warn!("User {} in department: {} is unknown", ldap, department);
-                        return Err(RpcError::IncorrectLoginInfo.into());
-                    }
+            let (firstname, lastname) = match server_error! {
+                sqlx::query!(
+                    "select firstname, lastname from celcat_students where id = $1 and department = $2",
+                    ldap, department
+                ).fetch_optional(&state.db).await
+            } {
+                Some(x) => (x.firstname, x.lastname),
+                None => {
+                    warn!("User {} in department: {} is unknown", ldap, department);
+                    return Err(RpcError::IncorrectLoginInfo.into());
                 }
             };
 
-            user.firstname = validity.0;
-            user.lastname = validity.1;
-
             let hash = uuid::Uuid::new_v4().to_string();
-            info!("{}", hash);
-            let register = RpcImpl::get_new_users_tokens();
-            register.put_user(hash.to_owned(), user);
+            debug!("hash: {}", hash);
+
+            let user = User {
+                id: ldap,
+                firstname,
+                lastname,
+                email: email.clone(),
+                password: "".to_string(),
+            };
+            state
+                .new_users_tokens
+                .lock()
+                .unwrap()
+                .insert(hash.clone(), user);
+
             let email_response = email::send_verification_email(email, hash);
             if !email_response.is_positive() {
                 warn!("{}", email_response.code().to_string());
@@ -314,20 +278,21 @@ impl Rpc for RpcImpl {
     }
 
     fn register_2(&self, hash: String) -> BoxFuture<jsonrpc_core::Result<Identity>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let register = RpcImpl::get_new_users_tokens();
-            if !register.tokens.contains_key(&*hash.to_owned()) {
-                warn!(
-                    "Someone tried to use an used or inexistant token: {}",
-                    hash.to_owned()
-                );
-                return Err(RpcError::RegistrationTokenUsed.into());
+            match state.new_users_tokens.lock().unwrap().get(&hash) {
+                Some(user) => Ok(Identity {
+                    firstname: user.firstname.clone(),
+                    lastname: user.lastname.clone(),
+                }),
+                None => {
+                    warn!(
+                        "Someone tried to use an used or inexistant token: {}",
+                        hash.to_owned()
+                    );
+                    Err(RpcError::RegistrationTokenUsed.into())
+                }
             }
-            let user_saved = register.tokens.get(&hash).unwrap();
-            Ok(Identity {
-                firstname: user_saved.firstname.to_owned(),
-                lastname: user_saved.lastname.to_owned(),
-            })
         })
     }
 
@@ -338,45 +303,40 @@ impl Rpc for RpcImpl {
         lastname: String,
         password: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let register = RpcImpl::get_new_users_tokens();
-            if !register.tokens.contains_key(&*hash.to_owned()) {
-                warn!(
-                    "Someone tried to use an used or inexistant token: {}",
-                    hash.to_owned()
-                );
-                return Err(RpcError::RegistrationTokenUsed.into());
-            }
-            let user_saved = register.tokens.get(&hash).unwrap();
-            let id_str = user_saved.id.to_string();
-            let pass_hasher = authentication::hash_password(password.to_owned(), id_str.to_owned());
-            let user = User {
-                id: user_saved.id.to_owned(),
-                firstname,
-                lastname,
-                email: user_saved.email.to_owned(),
-                password: pass_hasher,
-            };
-            let pool = RpcImpl::get_postgres();
-
-            {
-                let result = db::insert_user(&pool, user).await;
-                match result {
-                    Ok(data) => data,
-                    Err(err) => {
-                        warn!("{}", err.to_string());
-                        return Err(RpcError::Unimplemented.into());
-                    }
+            let user = match state.new_users_tokens.lock().unwrap().remove(&hash) {
+                Some(u) => User {
+                    firstname,
+                    lastname,
+                    password: authentication::hash_password(password, u.id.to_string()),
+                    ..u
+                },
+                None => {
+                    warn!(
+                        "Someone tried to use an used or inexistant token: {}",
+                        hash.to_owned()
+                    );
+                    return Err(RpcError::RegistrationTokenUsed.into());
                 }
-            }
-            register.tokens.remove(&*hash);
+            };
+
+            server_error! {
+                sqlx::query!(
+                    "insert into users (id, firstname, lastname, email, password)
+                     values ($1, $2, $3, $4, $5)",
+                    user.id, user.firstname, user.lastname, user.email, user.password,
+                ).execute(&state.db).await
+            };
+
             Ok("Account created!".to_string())
         })
     }
 
     fn is_logged(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<bool>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
+            let user = authentication::logged_user_get(&state.db, meta).await;
             return match user {
                 Some(_) => Ok(true),
                 None => Ok(false),
@@ -385,37 +345,36 @@ impl Rpc for RpcImpl {
     }
 
     fn my_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
-            if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into());
-            }
-            let user = user.unwrap();
-            let result = db::get_user_groups(RpcImpl::get_postgres(), user.id).await;
-            match result {
-                Ok(groups) => Ok(groups),
-                Err(err) => {
-                    warn!("{}", err.to_string());
-                    Err(RpcError::Unimplemented.into())
-                }
+            match authentication::logged_user_get(&state.db, meta).await {
+                Some(user) => Ok(server_error! {
+                    sqlx::query_as!(
+                        Group,
+                        "select g.* from groups as g
+                         join users_groups as ug on ug.group_id = g.id
+                         where ug.user_id = $1",
+                        user.id,
+                    ).fetch_all(&state.db).await
+                }),
+                None => Err(RpcError::IncorrectLoginInfo.into()),
             }
         })
     }
 
     fn all_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
-            if user.is_none() {
+            if authentication::logged_user_get(&state.db, meta)
+                .await
+                .is_none()
+            {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
-            let result = db::get_all_groups(RpcImpl::get_postgres()).await;
-            match result {
-                Ok(groups) => Ok(groups),
-                Err(err) => {
-                    warn!("{}", err.to_string());
-                    Err(RpcError::Unimplemented.into())
-                }
-            }
+            Ok(server_error! {
+                sqlx::query_as!(Group, "select * from groups where private = false")
+                    .fetch_all(&state.db).await
+            })
         })
     }
 
@@ -424,31 +383,24 @@ impl Rpc for RpcImpl {
         meta: Self::Metadata,
         groups: Vec<i32>,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
-            if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into());
-            }
-            let user = user.unwrap();
-
-            let mut failure = Vec::<i32>::new();
-            for group in groups {
-                let result =
-                    db::insert_user_in_group(RpcImpl::get_postgres(), user.id, group).await;
-                match result {
-                    Ok(_) => {}
-                    Err(_) => {
-                        warn!("Failed to add user {} in group {}", user.id, group);
-                        failure.push(group);
+            match authentication::logged_user_get(&state.db, meta).await {
+                Some(user) => {
+                    for group in groups {
+                        server_error! {
+                            sqlx::query!(
+                                "insert into users_groups (user_id, group_id)
+                                 select $1, $2
+                                 from groups where id = $2 and private = false",
+                                user.id, group,
+                            ).execute(&state.db).await
+                        };
                     }
+                    Ok("Success!".to_string())
                 }
+                None => Err(RpcError::IncorrectLoginInfo.into()),
             }
-
-            return if failure.len() == 0 {
-                Ok("Success!".parse().unwrap())
-            } else {
-                Err(RpcError::Unimplemented.into())
-            };
         })
     }
 
@@ -459,26 +411,28 @@ impl Rpc for RpcImpl {
         end: NaiveDateTime,
         group: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
-            if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into());
+            match authentication::logged_user_get(&state.db, meta).await {
+                Some(user) => match server_error! {
+                    sqlx::query!(
+                        "select from users_groups where user_id = $1 and group_id = $2",
+                        user.id, group,
+                    ).fetch_optional(&state.db).await
+                } {
+                    Some(_) => Ok(server_error! {
+                        sqlx::query_as!(
+                            Course,
+                            "select c.* from courses as c
+                             join groups_courses as gc on gc.group_id = $1
+                             where c.start_time >= $2 and c.end_time <= $3",
+                            group, start, end,
+                        ).fetch_all(&state.db).await
+                    }),
+                    None => Err(RpcError::Unimplemented.into()),
+                },
+                None => Err(RpcError::IncorrectLoginInfo.into()),
             }
-            let user = user.unwrap();
-            match db::is_user_in_group_or_brother_group(RpcImpl::get_postgres(), user.id, group)
-                .await
-            {
-                Ok(true) => {}
-                _ => {
-                    return Err(RpcError::Unimplemented.into());
-                }
-            }
-            let get_courses =
-                db::get_group_courses(RpcImpl::get_postgres(), group, start, end).await;
-            return match get_courses {
-                Ok(courses) => Ok(courses),
-                Err(_) => Err(RpcError::Unimplemented.into()),
-            };
         })
     }
 
@@ -487,25 +441,36 @@ impl Rpc for RpcImpl {
         meta: Self::Metadata,
         client_id: i32,
     ) -> BoxFuture<jsonrpc_core::Result<Option<String>>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
-            if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into());
+            let user = match authentication::logged_user_get(&state.db, meta).await {
+                Some(user) => user,
+                None => {
+                    return Err(RpcError::IncorrectLoginInfo.into());
+                }
+            };
+
+            if server_error!(
+                sqlx::query!("select from clients where id = $1", client_id)
+                    .fetch_optional(&state.db)
+                    .await
+            )
+            .is_none()
+            {
+                return Err(RpcError::UnknownClient.into());
             }
-            let user = user.unwrap();
 
-            let is_client_exist = db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
-            match is_client_exist {
-                Ok(_) => {}
-                Err(_) => return Err(RpcError::UnknownClient.into()),
-            };
-
-            let get_config =
-                db::get_client_user_config(RpcImpl::get_postgres(), client_id, user.id).await;
-            return match get_config {
-                Ok(config) => Ok(config),
-                Err(_) => Ok(None),
-            };
+            Ok(server_error!(
+                sqlx::query!(
+                    "select config from clients_users_config
+                     where client_id = $1 and user_id = $2",
+                    client_id,
+                    user.id,
+                )
+                .fetch_optional(&state.db)
+                .await
+            )
+            .and_then(|x| x.config))
         })
     }
 
@@ -515,26 +480,39 @@ impl Rpc for RpcImpl {
         client_id: i32,
         config: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(RpcImpl::get_postgres(), meta).await;
-            if user.is_none() {
-                return Err(RpcError::IncorrectLoginInfo.into());
+            let user = match authentication::logged_user_get(&state.db, meta).await {
+                Some(user) => user,
+                None => {
+                    return Err(RpcError::IncorrectLoginInfo.into());
+                }
+            };
+
+            if server_error!(
+                sqlx::query!("select from clients where id = $1", client_id)
+                    .fetch_optional(&state.db)
+                    .await
+            )
+            .is_none()
+            {
+                return Err(RpcError::UnknownClient.into());
             }
-            let user = user.unwrap();
 
-            let is_client_exist = db::is_client_exist(RpcImpl::get_postgres(), client_id).await;
-            match is_client_exist {
-                Ok(_) => {}
-                Err(_) => return Err(RpcError::UnknownClient.into()),
+            server_error! {
+                sqlx::query!(
+                    "insert into clients_users_config (client_id, user_id, config)
+                     values ($1, $2, $3)
+                     on conflict (client_id, user_id) do update set config = excluded.config",
+                    client_id,
+                    user.id,
+                    config,
+                )
+                .execute(&state.db)
+                .await
             };
 
-            let set_config =
-                db::set_client_user_config(RpcImpl::get_postgres(), client_id, user.id, config)
-                    .await;
-            return match set_config {
-                Ok(_) => Ok("Success!".parse().unwrap()),
-                Err(_) => Err(RpcError::UnknownError.into()),
-            };
+            Ok("Success!".to_string())
         })
     }
 
@@ -543,32 +521,34 @@ impl Rpc for RpcImpl {
         ldap: i64,
         email: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let pool = RpcImpl::get_postgres();
-
-            let user: User = {
-                let result = db::match_user_by_id(&pool, ldap).await;
-
-                match result {
-                    Ok(user) => user,
-                    Err(_) => {
-                        warn!("user student {} is not registered", ldap);
-                        return Err(RpcError::IncorrectLoginInfo.into());
-                    }
+            let user = match server_error! {
+                sqlx::query_as!(User, "select * from users where id = $1", ldap)
+                    .fetch_optional(&state.db)
+                    .await
+            } {
+                Some(user) => user,
+                None => {
+                    return Err(RpcError::IncorrectLoginInfo.into());
                 }
             };
-
-            let firstname = user.firstname.clone();
-            let lastname = user.lastname.clone();
 
             if user.email != email {
                 return Err(RpcError::IncorrectLoginInfo.into());
             }
 
             let hash = uuid::Uuid::new_v4().to_string();
-            info!("{}", hash);
-            let reset_password = RpcImpl::get_reset_password_tokens();
-            reset_password.put_user(hash.to_owned(), user);
+            debug!("hash: {}", hash);
+
+            let firstname = user.firstname.clone();
+            let lastname = user.lastname.clone();
+
+            state
+                .reset_password_tokens
+                .lock()
+                .unwrap()
+                .insert(hash.clone(), user);
             let email_response = email::send_reset_password_email(email, firstname, lastname, hash);
             if !email_response.is_positive() {
                 warn!("{}", email_response.code().to_string());
@@ -584,38 +564,29 @@ impl Rpc for RpcImpl {
         code: String,
         password: String,
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
+        let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let reset_password = RpcImpl::get_reset_password_tokens();
-            if !reset_password.tokens.contains_key(&*code.to_owned()) {
-                warn!(
-                    "Someone tried to use a used or inexistant token: {}",
-                    code.to_owned()
-                );
-                return Err(RpcError::Unimplemented.into());
-            }
-            let user_saved = reset_password.tokens.get(&code).unwrap();
-            let id_str = user_saved.id.to_string();
-            let pass_hasher = authentication::hash_password(password.to_owned(), id_str.to_owned());
-            let user = User {
-                id: user_saved.id.to_owned(),
-                firstname: user_saved.firstname.to_owned(),
-                lastname: user_saved.lastname.to_owned(),
-                email: user_saved.email.to_owned(),
-                password: pass_hasher,
-            };
-            let pool = RpcImpl::get_postgres();
-
-            {
-                let result = db::update_user(&pool, user).await;
-                match result {
-                    Ok(data) => data,
-                    Err(err) => {
-                        warn!("{}", err.to_string());
-                        return Err(RpcError::Unimplemented.into());
-                    }
+            let user = match state.reset_password_tokens.lock().unwrap().remove(&code) {
+                Some(u) => User {
+                    password: authentication::hash_password(password.clone(), u.id.to_string()),
+                    ..u
+                },
+                None => {
+                    warn!(
+                        "Someone tried to use a used or inexistant token: {}",
+                        code.to_owned()
+                    );
+                    return Err(RpcError::Unimplemented.into());
                 }
             };
-            reset_password.tokens.remove(&*code);
+
+            server_error! {
+                sqlx::query!(
+                    "update users set password = $1 where id = $2",
+                    password, user.id,
+                ).execute(&state.db).await
+            };
+
             Ok("Password changed!".to_string())
         })
     }
