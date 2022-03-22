@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use jsonrpc_core::Metadata;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation};
 use pbkdf2::{
@@ -106,28 +104,6 @@ pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> Option<User> {
         }
     };
     Some(user)
-}
-
-#[derive(std::fmt::Debug)]
-pub struct Register {
-    pub tokens: HashMap<String, User>,
-}
-
-impl Register {
-    pub fn put_user(&mut self, hash: String, user: User) {
-        self.tokens.insert(hash, user);
-    }
-}
-
-#[derive(std::fmt::Debug)]
-pub struct ResetPassword {
-    pub tokens: HashMap<String, User>,
-}
-
-impl ResetPassword {
-    pub fn put_user(&mut self, hash: String, user: User) {
-        self.tokens.insert(hash, user);
-    }
 }
 
 pub fn hash_password(password: String, salt: String) -> String {
