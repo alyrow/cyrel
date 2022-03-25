@@ -424,8 +424,8 @@ impl Rpc for RpcImpl {
                         sqlx::query_as!(
                             Course,
                             "select c.* from courses as c
-                             join groups_courses as gc on gc.group_id = $1
-                             where c.start_time >= $2 and c.end_time <= $3",
+                             join groups_courses as gc on c.id = gc.course_id
+                             where gc.group_id = $1 and c.start_time >= $2 and c.end_time <= $3",
                             group, start, end,
                         ).fetch_all(&state.db).await
                     }),
