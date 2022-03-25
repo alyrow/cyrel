@@ -7,8 +7,8 @@ use chrono::{NaiveDateTime, Utc};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use lettre::{
-    transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport,
-    Tokio1Executor,
+    AsyncSmtpTransport, AsyncTransport, Tokio1Executor,
+    transport::smtp::authentication::Credentials,
 };
 use pbkdf2::{
     password_hash::{PasswordHash, PasswordVerifier},
@@ -595,7 +595,7 @@ impl Rpc for RpcImpl {
         Box::pin(async move {
             let user = match state.reset_password_tokens.lock().unwrap().remove(&code) {
                 Some(u) => User {
-                    password: authentication::hash_password(password.clone(), u.id.to_string()),
+                    password: authentication::hash_password(password, u.id.to_string()),
                     ..u
                 },
                 None => {
@@ -610,7 +610,7 @@ impl Rpc for RpcImpl {
             server_error! {
                 sqlx::query!(
                     "update users set password = $1 where id = $2",
-                    password, user.id,
+                    user.password, user.id,
                 ).execute(&state.db).await
             };
 
