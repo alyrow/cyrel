@@ -402,7 +402,8 @@ impl Rpc for RpcImpl {
                             sqlx::query!(
                                 "insert into users_groups (user_id, group_id)
                                  select $1, $2
-                                 from groups where id = $2 and private = false",
+                                 from groups where id = $2 and private = false
+                                 on conflict (user_id, group_id) do nothing",
                                 user.id, group,
                             ).execute(&state.db).await
                         };
