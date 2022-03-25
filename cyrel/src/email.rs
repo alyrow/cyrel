@@ -1,5 +1,8 @@
 use askama::Template;
-use lettre::{Message, message::{SinglePart, MultiPart}};
+use lettre::{
+    message::{MultiPart, SinglePart},
+    Message,
+};
 
 use crate::SETTINGS;
 
@@ -34,11 +37,12 @@ struct InscriptionHtmlTemplate<'a> {
 }
 
 pub fn gen_inscription(email: &str, hash: &str) -> anyhow::Result<Message> {
-    gen(email, "Inscription", InscriptionTxtTemplate {
-        hash
-    }, InscriptionHtmlTemplate {
-        hash
-    })
+    gen(
+        email,
+        "Inscription",
+        InscriptionTxtTemplate { hash },
+        InscriptionHtmlTemplate { hash },
+    )
 }
 
 #[derive(Template)]
@@ -57,10 +61,24 @@ struct ResetHtmlTemplate<'a> {
     hash: &'a str,
 }
 
-pub fn gen_reset(email: &str, firstname: &str, lastname: &str, hash: &str) -> anyhow::Result<Message> {
-    gen(email, "Réinitialisation du mot de passe", ResetTxtTemplate {
-        firstname, lastname, hash,
-    }, ResetHtmlTemplate {
-        firstname, lastname, hash,
-    })
+pub fn gen_reset(
+    email: &str,
+    firstname: &str,
+    lastname: &str,
+    hash: &str,
+) -> anyhow::Result<Message> {
+    gen(
+        email,
+        "Réinitialisation du mot de passe",
+        ResetTxtTemplate {
+            firstname,
+            lastname,
+            hash,
+        },
+        ResetHtmlTemplate {
+            firstname,
+            lastname,
+            hash,
+        },
+    )
 }

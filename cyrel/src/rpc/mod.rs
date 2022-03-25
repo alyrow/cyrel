@@ -6,13 +6,16 @@ use std::{
 use chrono::{NaiveDateTime, Utc};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
+use lettre::{
+    transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport,
+    Tokio1Executor,
+};
 use pbkdf2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Pbkdf2,
 };
 use sqlx::PgPool;
 use tracing::{debug, error, info, warn};
-use lettre::{AsyncTransport, AsyncSmtpTransport, Tokio1Executor, transport::smtp::authentication::Credentials};
 
 use crate::authentication::{self, Claims, Meta};
 use crate::email;
@@ -129,7 +132,12 @@ impl RpcImpl {
             db,
             new_users_tokens: Mutex::new(HashMap::new()),
             reset_password_tokens: Mutex::new(HashMap::new()),
-            mailer: AsyncSmtpTransport::<Tokio1Executor>::relay(&SETTINGS.smtp.server)?.credentials(Credentials::new(SETTINGS.smtp.username.clone(), SETTINGS.smtp.password.clone())).build(),
+            mailer: AsyncSmtpTransport::<Tokio1Executor>::relay(&SETTINGS.smtp.server)?
+                .credentials(Credentials::new(
+                    SETTINGS.smtp.username.clone(),
+                    SETTINGS.smtp.password.clone(),
+                ))
+                .build(),
         })))
     }
 }

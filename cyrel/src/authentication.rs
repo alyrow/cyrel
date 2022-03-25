@@ -66,18 +66,21 @@ pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> Option<User> {
         Ok(None) => {
             warn!("User not logged!");
             return None;
-        },
+        }
         Err(err) => {
             warn!("{}", err.to_string());
             return None;
-        },
+        }
     };
 
     match sqlx::query_as!(
         User,
         "select * from users where id = $1",
         claims.sub.parse::<i64>().unwrap(),
-    ).fetch_one(pool).await {
+    )
+    .fetch_one(pool)
+    .await
+    {
         Ok(user) => Some(user),
         Err(err) => {
             warn!("{}", err.to_string());
