@@ -53,7 +53,7 @@ async fn main() -> anyhow::Result<()> {
     let mut io = MetaIoHandler::default();
 
     let db = PgPoolOptions::new().connect(&SETTINGS.database.url).await?;
-    let rpc = RpcImpl::new(db);
+    let rpc = RpcImpl::new(db).unwrap();
 
     io.extend_with(rpc.to_delegate());
 

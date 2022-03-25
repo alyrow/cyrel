@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réinitialisation du mot de passe</title>
+  </head>
+  <body>
+    <h1>Réinitialisation du mot de passe</h1>
+    <p>
+      Bonjour {{ firstname }} {{ lastname }}. Vous avez demandé de réinitialiser votre mot de passe.
+      Si cette demande n'a pas été initiée par vous, merci d'ignorer ce mail.
+    </p>
+    <p>
+      Copiez-collez le code sur la page de réinitialisation pour continuer :
+      <b>{{ hash }}</b>
+    </p>
+  </body>
+</html>

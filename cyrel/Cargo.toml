@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
+askama = "0.11"
 chrono = { version = "0.4", features = ["serde"] }
 clap = "2"
 config = "0.11"
@@ -18,7 +19,7 @@ jsonrpc-derive = { git = "https://github.com/luc65r/jsonrpc", rev = "6ae633c0fa4
 jsonrpc-http-server = { git = "https://github.com/luc65r/jsonrpc", rev = "6ae633c0fa4dfdc00711877ac2154a83bdc08611" }
 jsonwebtoken = "7"
 lazy_static = "1.4"
-lettre = "0.10.0-rc.4"
+lettre = { version = "0.10.0-rc.4", features = ["tokio1-native-tls"] }
 once_cell = "1.7.2"
 pbkdf2 = "0.8"
 rand = "0.8"

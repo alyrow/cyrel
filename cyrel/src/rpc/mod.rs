@@ -12,6 +12,7 @@ use pbkdf2::{
 };
 use sqlx::PgPool;
 use tracing::{debug, error, info, warn};
+use lettre::{AsyncTransport, AsyncSmtpTransport, Tokio1Executor, transport::smtp::authentication::Credentials};
 
 use crate::authentication::{self, Claims, Meta};
 use crate::email;
@@ -119,15 +120,17 @@ struct RpcState {
     // FIXME: put those in the DB
     new_users_tokens: Mutex<HashMap<String, User>>,
     reset_password_tokens: Mutex<HashMap<String, User>>,
+    mailer: AsyncSmtpTransport<Tokio1Executor>,
 }
 
 impl RpcImpl {
-    pub fn new(db: PgPool) -> RpcImpl {
-        RpcImpl(Arc::new(RpcState {
+    pub fn new(db: PgPool) -> Result<RpcImpl, lettre::transport::smtp::Error> {
+        Ok(RpcImpl(Arc::new(RpcState {
             db,
             new_users_tokens: Mutex::new(HashMap::new()),
             reset_password_tokens: Mutex::new(HashMap::new()),
-        }))
+            mailer: AsyncSmtpTransport::<Tokio1Executor>::relay(&SETTINGS.smtp.server)?.credentials(Credentials::new(SETTINGS.smtp.username.clone(), SETTINGS.smtp.password.clone())).build(),
+        })))
     }
 }
 
@@ -267,13 +270,20 @@ impl Rpc for RpcImpl {
                 .unwrap()
                 .insert(hash.clone(), user);
 
-            let email_response = email::send_verification_email(email, hash);
-            if !email_response.is_positive() {
-                warn!("{}", email_response.code().to_string());
-                return Err(RpcError::UnknownError.into());
+            let message = match email::gen_inscription(&email, &hash) {
+                Ok(msg) => msg,
+                Err(err) => {
+                    warn!("{}", err);
+                    return Err(RpcError::UnknownError.into());
+                }
+            };
+            match state.mailer.send(message).await {
+                Ok(_) => Ok("Code sent".to_string()),
+                Err(err) => {
+                    warn!("{}", err);
+                    return Err(RpcError::UnknownError.into());
+                }
             }
-
-            Ok("Code sent".to_string())
         })
     }
 
@@ -549,13 +559,21 @@ impl Rpc for RpcImpl {
                 .lock()
                 .unwrap()
                 .insert(hash.clone(), user);
-            let email_response = email::send_reset_password_email(email, firstname, lastname, hash);
-            if !email_response.is_positive() {
-                warn!("{}", email_response.code().to_string());
-                return Err(RpcError::UnknownError.into());
-            }
 
-            Ok("Code sent".to_string())
+            let message = match email::gen_reset(&email, &firstname, &lastname, &hash) {
+                Ok(msg) => msg,
+                Err(err) => {
+                    warn!("{}", err);
+                    return Err(RpcError::UnknownError.into());
+                }
+            };
+            match state.mailer.send(message).await {
+                Ok(_) => Ok("Code sent".to_string()),
+                Err(err) => {
+                    warn!("{}", err);
+                    return Err(RpcError::UnknownError.into());
+                }
+            }
         })
     }
 

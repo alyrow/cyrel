@@ -1,0 +1,8 @@
+Réinitialisation du mot de passe :
+
+Bonjour {{ firstname }} {{ lastname }}. Vous avez demandé de
+réinitialiser votre mot de passe.  Si cette demande n'a pas été
+initiée par vous, merci d'ignorer ce mail.
+
+Copiez-collez le code sur la page de réinitialisation pour continuer :
+{{ hash }}

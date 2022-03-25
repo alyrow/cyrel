@@ -1,0 +1,7 @@
+Inscription sur Cyrel :
+
+Merci de vous inscrire sur Cyrel. Il vous manque quelques étapes afin
+de finaliser votre inscription.
+
+Copiez-collez le code sur la page d'inscription pour continuer :
+{{ hash }}
