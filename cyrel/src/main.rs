@@ -65,10 +65,8 @@ async fn main() -> anyhow::Result<()> {
             let jwt = req
                 .headers()
                 .get(hyper::header::AUTHORIZATION)
-                .map(|h| h.to_str().ok())
-                .flatten()
-                .map(|s| s.strip_prefix("Bearer ")) // FIXME: reliable?
-                .flatten()
+                .and_then(|h| h.to_str().ok())
+                .and_then(|s| s.strip_prefix("Bearer ")) // FIXME: reliable?
                 .map(|s| s.to_owned());
             trace!("got JWT: {:?}", jwt);
             Meta { jwt }
