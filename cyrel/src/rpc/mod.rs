@@ -435,7 +435,10 @@ impl Rpc for RpcImpl {
             match authentication::logged_user_get(&state.db, meta).await {
                 Some(user) => match server_error! {
                     sqlx::query!(
-                        "select from users_groups where user_id = $1 and group_id = $2",
+                        "select from groups as g
+                         join groups as h on h.id = g.id or h.parent = g.parent
+                         join users_groups as ug on ug.group_id = h.id
+                         where ug.user_id = $1 and g.id = $2",
                         user.id, group,
                     ).fetch_optional(&state.db).await
                 } {
