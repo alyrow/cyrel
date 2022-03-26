@@ -222,9 +222,7 @@ impl Rpc for RpcImpl {
                 }
             };
 
-            let mut email = email;
-            email.push_str("@");
-            email.push_str(&*dpmt.domain);
+            let email = format!("{}@{}", email, &dpmt.domain);
 
             if server_error!(
                 sqlx::query!("select id from users where id = $1", ldap)
