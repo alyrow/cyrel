@@ -7,8 +7,8 @@ use chrono::{NaiveDateTime, Utc};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use lettre::{
-    AsyncSmtpTransport, AsyncTransport, Tokio1Executor,
-    transport::smtp::authentication::Credentials,
+    transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport,
+    Tokio1Executor,
 };
 use pbkdf2::{
     password_hash::{PasswordHash, PasswordVerifier},
@@ -327,7 +327,13 @@ impl Rpc for RpcImpl {
                 Some(u) => User {
                     firstname,
                     lastname,
-                    password: authentication::hash_password(password, u.id.to_string()),
+                    password: match authentication::hash_password(&password, &u.id.to_string()) {
+                        Ok(p) => p,
+                        Err(err) => {
+                            warn!("{}", err);
+                            return Err(RpcError::UnknownError.into());
+                        }
+                    },
                     ..u
                 },
                 None => {
@@ -598,7 +604,13 @@ impl Rpc for RpcImpl {
         Box::pin(async move {
             let user = match state.reset_password_tokens.lock().unwrap().remove(&code) {
                 Some(u) => User {
-                    password: authentication::hash_password(password, u.id.to_string()),
+                    password: match authentication::hash_password(&password, &u.id.to_string()) {
+                        Ok(p) => p,
+                        Err(err) => {
+                            warn!("{}", err);
+                            return Err(RpcError::UnknownError.into());
+                        }
+                    },
                     ..u
                 },
                 None => {

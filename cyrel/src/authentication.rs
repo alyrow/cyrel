@@ -89,9 +89,8 @@ pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> Option<User> {
     }
 }
 
-pub fn hash_password(password: String, salt: String) -> String {
-    Pbkdf2
-        .hash_password_simple(password.as_bytes(), &Salt::new(&*salt).unwrap())
-        .unwrap()
-        .to_string()
+pub fn hash_password(password: &str, salt: &str) -> pbkdf2::password_hash::Result<String> {
+    Ok(Pbkdf2
+        .hash_password_simple(password.as_bytes(), &Salt::new(salt)?)?
+        .to_string())
 }
