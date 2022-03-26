@@ -360,18 +360,16 @@ impl Rpc for RpcImpl {
     fn is_logged(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<bool>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = authentication::logged_user_get(&state.db, meta).await;
-            return match user {
-                Some(_) => Ok(true),
-                None => Ok(false),
-            };
+            Ok(server_error!(authentication::logged_user_get(&state.db, meta).await).is_some())
         })
     }
 
     fn my_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            match authentication::logged_user_get(&state.db, meta).await {
+            match server_error! {
+                authentication::logged_user_get(&state.db, meta).await
+            } {
                 Some(user) => Ok(server_error! {
                     sqlx::query_as!(
                         Group,
@@ -389,16 +387,15 @@ impl Rpc for RpcImpl {
     fn all_groups_get(&self, meta: Self::Metadata) -> BoxFuture<jsonrpc_core::Result<Vec<Group>>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            if authentication::logged_user_get(&state.db, meta)
-                .await
-                .is_none()
-            {
-                return Err(RpcError::IncorrectLoginInfo.into());
+            match server_error! {
+                authentication::logged_user_get(&state.db, meta).await
+            } {
+                Some(_) => Ok(server_error! {
+                    sqlx::query_as!(Group, "select * from groups where private = false")
+                        .fetch_all(&state.db).await
+                }),
+                None => Err(RpcError::IncorrectLoginInfo.into()),
             }
-            Ok(server_error! {
-                sqlx::query_as!(Group, "select * from groups where private = false")
-                    .fetch_all(&state.db).await
-            })
         })
     }
 
@@ -409,7 +406,9 @@ impl Rpc for RpcImpl {
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            match authentication::logged_user_get(&state.db, meta).await {
+            match server_error! {
+                authentication::logged_user_get(&state.db, meta).await
+            } {
                 Some(user) => {
                     for group in groups {
                         server_error! {
@@ -438,7 +437,9 @@ impl Rpc for RpcImpl {
     ) -> BoxFuture<jsonrpc_core::Result<Vec<Course>>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            match authentication::logged_user_get(&state.db, meta).await {
+            match server_error! {
+                authentication::logged_user_get(&state.db, meta).await
+            } {
                 Some(user) => match server_error! {
                     sqlx::query!(
                         "select from groups as g
@@ -471,7 +472,9 @@ impl Rpc for RpcImpl {
     ) -> BoxFuture<jsonrpc_core::Result<Option<String>>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = match authentication::logged_user_get(&state.db, meta).await {
+            let user = match server_error! {
+                authentication::logged_user_get(&state.db, meta).await
+            } {
                 Some(user) => user,
                 None => {
                     return Err(RpcError::IncorrectLoginInfo.into());
@@ -510,7 +513,9 @@ impl Rpc for RpcImpl {
     ) -> BoxFuture<jsonrpc_core::Result<String>> {
         let state = Arc::clone(&self.0);
         Box::pin(async move {
-            let user = match authentication::logged_user_get(&state.db, meta).await {
+            let user = match server_error! {
+                authentication::logged_user_get(&state.db, meta).await
+            } {
                 Some(user) => user,
                 None => {
                     return Err(RpcError::IncorrectLoginInfo.into());

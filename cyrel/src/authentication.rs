@@ -60,33 +60,22 @@ impl Claims {
     }
 }
 
-pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> Option<User> {
-    let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret) {
-        Ok(Some(claims)) => claims,
-        Ok(None) => {
+pub async fn logged_user_get(pool: &PgPool, meta: Meta) -> anyhow::Result<Option<User>> {
+    let claims = match Claims::from_meta(&meta, &SETTINGS.jwt.secret)? {
+        Some(claims) => claims,
+        None => {
             warn!("User not logged!");
-            return None;
-        }
-        Err(err) => {
-            warn!("{}", err.to_string());
-            return None;
+            return Ok(None);
         }
     };
 
-    match sqlx::query_as!(
+    Ok(sqlx::query_as!(
         User,
         "select * from users where id = $1",
-        claims.sub.parse::<i64>().unwrap(),
+        claims.sub.parse::<i64>()?,
     )
-    .fetch_one(pool)
-    .await
-    {
-        Ok(user) => Some(user),
-        Err(err) => {
-            warn!("{}", err.to_string());
-            None
-        }
-    }
+    .fetch_optional(pool)
+    .await?)
 }
 
 pub fn hash_password(password: &str, salt: &str) -> pbkdf2::password_hash::Result<String> {
