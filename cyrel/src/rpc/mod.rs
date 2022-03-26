@@ -289,7 +289,7 @@ impl Rpc for RpcImpl {
                 Ok(_) => Ok("Code sent".to_string()),
                 Err(err) => {
                     warn!("{}", err);
-                    return Err(RpcError::UnknownError.into());
+                    Err(RpcError::UnknownError.into())
                 }
             }
         })
@@ -594,7 +594,7 @@ impl Rpc for RpcImpl {
                 Ok(_) => Ok("Code sent".to_string()),
                 Err(err) => {
                     warn!("{}", err);
-                    return Err(RpcError::UnknownError.into());
+                    Err(RpcError::UnknownError.into())
                 }
             }
         })
