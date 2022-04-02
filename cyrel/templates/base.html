@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ title }}{% endblock %}</title>
+  <style>
+    body {
+      font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;
+      background-color: #fafafa;
+    }
+
+    h1 {
+      font-weight: 700;
+      min-height: 1rem;
+      font-size: 2rem;
+      margin-top: 0;
+    }
+
+    .block {
+      width: 800px;
+      margin: 5% auto;
+      border: rgba(170, 169, 171, 0.24) 1px solid;
+      background-color: white;
+      border-radius: 5px;
+    }
+
+    .head {
+      padding: 20px;
+      border-bottom: rgba(170, 169, 171, 0.24) 1px solid;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .code {
+      padding: 10px;
+      background-color: #f7f7f7;
+      text-align: center;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+
+    .foot {
+      padding: 20px;
+      border-top: rgba(170, 169, 171, 0.24) 1px solid;
+    }
+
+    @media screen and (max-width: 800px) and (min-width: 501px) {
+      .block {
+        width: 500px;
+      }
+    }
+
+    @media screen and (max-width: 500px) and (min-width: 301px) {
+      .block {
+        width: 300px;
+      }
+    }
+
+    @media screen and (max-width: 300px) {
+      .block {
+        width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="block">
+  <div class="head">
+    <img src="https://github.com/alyrow/cyrel-web/raw/14d2dd2421b4da52eda21cc291ec26daad9b10d9/src/images/logos/cyrel_long-512.png" alt="CYREL" width="128">
+  </div>
+  <div class="content">
+    <h1>{% block title %}{{ title }}{% endblock %}</h1>
+    {% block content %}{{ content }}{% endblock %}
+  </div>
+  <div class="foot">
+    <a href="https://github.com/alyrow/cyrel">
+      <img src="https://img.icons8.com/ios-glyphs/38/000000/github.png" alt="Github" width="38" height="38">
+    </a>
+  </div>
+</div>
+</body>
+</html>

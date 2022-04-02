@@ -1,19 +1,12 @@
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inscription sur Cyrel</title>
-  </head>
-  <body>
-    <h1>Inscription sur Cyrel</h1>
-    <p>
-      Merci de vous inscrire sur Cyrel.
-      Il vous manque quelques étapes afin de finaliser votre inscription.
-    </p>
-    <p>
-      Copiez-collez le code sur la page d'inscription pour continuer :
-      <b>{{ hash }}</b>
-    </p>
-  </body>
-</html>
+{% extends "base.html" %}
+{% block title %}Inscription sur Cyrel{% endblock %}
+{% block content %}
+  <p>
+    Merci de vous inscrire sur Cyrel.
+    Il vous manque quelques étapes afin de finaliser votre inscription.
+  </p>
+  <p>
+    Copiez-collez le code sur la page d'inscription pour continuer
+  </p>
+  <div class="code">{{ hash }}</div>
+{% endblock %}
